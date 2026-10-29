@@ -1,0 +1,16 @@
+{
+  "BACKEND": "apikey",
+  "MODEL": "gemini-3.1-flash-lite",
+  "PRICE_IN": 0.25,
+  "PRICE_OUT": 1.5,
+  "PROXY_PREFIX": "google/",
+  "TEMPERATURE": 0.0,
+  "USER_TEMPERATURE": 1.0,
+  "CONCURRENCY": 4,
+  "NUM_RETRIES": 6,
+  "CALL_TIMEOUT": 600,
+  "ENV": "airline",
+  "N_TASKS": 50,
+  "N_TRIALS": 8,
+  "policy": "prose wiki.md"
+}

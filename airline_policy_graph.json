@@ -1,0 +1,578 @@
+{
+  "how_to_fill": "Policy graph for tau-bench airline. Each condition: condition, actor (agent or user), check (data or dialogue), source (bullet id), if_fails (default deny, G4). any_of / all_of = OR / AND. 'order' in needs_info = must be asked in that order. 'must_happen_before' = this step must be done before the named action. 'amount' sits on an OR branch = the certificate amount if that branch is the one that holds.",
+  "rule_of_thumb": "Graph = same content as wiki.md, only the form differs. Nothing added, nothing dropped.",
+  "source_ids": "G1-G5 global, D1-D3 domain basic (D3a-c = flight status), B1-B5 book, M1-M6 modify, C1-C4 cancel, R1-R3 refund. Numbered top to bottom in wiki.md.",
+  "info_only": [
+    {
+      "source": "D1",
+      "text": "user profile fields: user id, email, addresses, date of birth, payment methods, reservation numbers, membership tier"
+    },
+    {
+      "source": "D2",
+      "text": "reservation fields: reservation id, user id, trip type, flights, passengers, payment methods, created time, baggages, travel insurance"
+    },
+    {
+      "source": "C4",
+      "text": "refund goes to the original payment methods in 5 to 7 business days"
+    }
+  ],
+  "global_rules": [
+    {
+      "condition": "list the action details and get an explicit 'yes' from the user before the action",
+      "actor": "user",
+      "check": "dialogue",
+      "source": "G1",
+      "verified": true,
+      "applies_to": [
+        "book_reservation",
+        "update_reservation_flights",
+        "update_reservation_baggages",
+        "upgrade_cabin",
+        "update_reservation_passengers"
+      ],
+      "_note": "wiki.md G1 lists only these 5. cancel_reservation and send_certificate also write to the database but are not listed, so they are not linked. Kept literal on purpose."
+    },
+    {
+      "condition": "give no information, knowledge or procedures not given by the user or the tools; no subjective recommendations or comments",
+      "actor": "agent",
+      "check": "dialogue",
+      "source": "G2",
+      "verified": true
+    },
+    {
+      "condition": "make one tool call at a time; never call a tool and reply to the user in the same turn",
+      "actor": "agent",
+      "check": "data",
+      "source": "G3",
+      "verified": true
+    },
+    {
+      "condition": "deny user requests that are against this policy",
+      "actor": "agent",
+      "check": "dialogue",
+      "source": "G4",
+      "verified": true,
+      "_note": "this is what if_fails='deny' means everywhere below"
+    },
+    {
+      "condition": "transfer to a human agent if and only if the request cannot be handled by any of the agent's actions",
+      "actor": "agent",
+      "check": "dialogue",
+      "source": "G5",
+      "verified": true
+    }
+  ],
+  "actions": [
+    {
+      "action": "book_reservation",
+      "tool": "book_reservation",
+      "read": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "D3"
+      ],
+      "needs_info": [
+        {
+          "info": "user_id",
+          "source": "B1",
+          "verified": true,
+          "order": 1
+        },
+        {
+          "info": "trip_type (one way or round trip)",
+          "source": "B1",
+          "verified": true,
+          "order": 2
+        },
+        {
+          "info": "origin",
+          "source": "B1",
+          "verified": true,
+          "order": 2
+        },
+        {
+          "info": "destination",
+          "source": "B1",
+          "verified": true,
+          "order": 2
+        },
+        {
+          "info": "first name, last name, date of birth of each passenger",
+          "source": "B2",
+          "verified": true
+        },
+        {
+          "info": "payment methods",
+          "source": "B3",
+          "verified": true
+        },
+        {
+          "info": "whether the user wants travel insurance",
+          "source": "B5",
+          "verified": true
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "every flight on the chosen date has status 'available' (not 'delayed', 'on time' or 'flying')",
+          "actor": "agent",
+          "check": "data",
+          "source": "D3",
+          "verified": true
+        },
+        {
+          "condition": "at most 5 passengers",
+          "actor": "agent",
+          "check": "data",
+          "source": "B2",
+          "verified": true
+        },
+        {
+          "condition": "all passengers fly the same flights in the same cabin",
+          "actor": "agent",
+          "check": "data",
+          "source": "B2",
+          "verified": true
+        },
+        {
+          "condition": "at most 1 travel certificate, at most 1 credit card, at most 3 gift cards",
+          "actor": "agent",
+          "check": "data",
+          "source": "B3",
+          "verified": true
+        },
+        {
+          "condition": "every payment method is already in the user's profile",
+          "actor": "agent",
+          "check": "data",
+          "source": "B3",
+          "verified": true
+        },
+        {
+          "condition": "the agent asks whether the user wants travel insurance",
+          "actor": "agent",
+          "check": "dialogue",
+          "source": "B5",
+          "verified": true
+        }
+      ],
+      "facts": [
+        {
+          "text": "the unused part of a travel certificate is not refundable",
+          "source": "B3",
+          "verified": true
+        },
+        {
+          "text": "insurance costs $30 per passenger and gives a full refund if the user cancels for health or weather reasons",
+          "source": "B5",
+          "verified": true
+        }
+      ],
+      "tables": [
+        {
+          "name": "free_checked_bags_per_passenger",
+          "source": "B4",
+          "verified": true,
+          "rows": {
+            "regular": {
+              "basic_economy": 0,
+              "economy": 1,
+              "business": 2
+            },
+            "silver": {
+              "basic_economy": 1,
+              "economy": 2,
+              "business": 3
+            },
+            "gold": {
+              "basic_economy": 2,
+              "economy": 3,
+              "business": 3
+            }
+          },
+          "key": "membership tier of the booking user x cabin",
+          "extra_bag_price": 50
+        }
+      ]
+    },
+    {
+      "action": "update_reservation_flights",
+      "tool": "update_reservation_flights",
+      "read": [
+        "M1",
+        "M2",
+        "M6"
+      ],
+      "needs_info": [
+        {
+          "info": "user_id",
+          "source": "M1",
+          "verified": true,
+          "order": 1
+        },
+        {
+          "info": "reservation_id",
+          "source": "M1",
+          "verified": true,
+          "order": 1
+        },
+        {
+          "info": "one gift card or credit card for payment or refund",
+          "source": "M6",
+          "verified": true
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "the reservation is not basic economy",
+          "actor": "agent",
+          "check": "data",
+          "source": "M2",
+          "verified": true
+        },
+        {
+          "condition": "origin, destination and trip type stay the same",
+          "actor": "agent",
+          "check": "data",
+          "source": "M2",
+          "verified": true
+        },
+        {
+          "condition": "payment or refund method is exactly one gift card or credit card",
+          "actor": "agent",
+          "check": "data",
+          "source": "M6",
+          "verified": true
+        }
+      ],
+      "facts": [
+        {
+          "text": "kept segments keep their old price; their price is not updated",
+          "source": "M2",
+          "verified": true
+        },
+        {
+          "text": "the API does not check these rules, the agent must check them before the call",
+          "source": "M2",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "action": "upgrade_cabin",
+      "tool": "update_reservation_flights",
+      "read": [
+        "M1",
+        "M3"
+      ],
+      "needs_info": [
+        {
+          "info": "user_id",
+          "source": "M1",
+          "verified": true,
+          "order": 1
+        },
+        {
+          "info": "reservation_id",
+          "source": "M1",
+          "verified": true,
+          "order": 1
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "the flights stay the same; only the cabin changes",
+          "actor": "agent",
+          "check": "data",
+          "source": "M3",
+          "verified": true
+        },
+        {
+          "condition": "the new cabin is the same for every flight in the reservation",
+          "actor": "agent",
+          "check": "data",
+          "source": "M3",
+          "verified": true
+        }
+      ],
+      "facts": [
+        {
+          "text": "allowed for all reservations, including basic economy",
+          "source": "M3",
+          "verified": true
+        },
+        {
+          "text": "the user pays the price difference between the current and the new cabin",
+          "source": "M3",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "action": "update_reservation_baggages",
+      "tool": "update_reservation_baggages",
+      "read": [
+        "M1",
+        "M4"
+      ],
+      "needs_info": [
+        {
+          "info": "user_id",
+          "source": "M1",
+          "verified": true,
+          "order": 1
+        },
+        {
+          "info": "reservation_id",
+          "source": "M1",
+          "verified": true,
+          "order": 1
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "the new number of checked bags is not lower than the current one (add only, never remove)",
+          "actor": "agent",
+          "check": "data",
+          "source": "M4",
+          "verified": true
+        },
+        {
+          "condition": "no travel insurance is added after the initial booking",
+          "actor": "agent",
+          "check": "data",
+          "source": "M4",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "action": "update_reservation_passengers",
+      "tool": "update_reservation_passengers",
+      "read": [
+        "M1",
+        "M5"
+      ],
+      "needs_info": [
+        {
+          "info": "user_id",
+          "source": "M1",
+          "verified": true,
+          "order": 1
+        },
+        {
+          "info": "reservation_id",
+          "source": "M1",
+          "verified": true,
+          "order": 1
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "the number of passengers stays the same",
+          "actor": "agent",
+          "check": "data",
+          "source": "M5",
+          "verified": true,
+          "if_fails": "deny",
+          "_note": "M5: even a human agent cannot help, so deny, do not transfer"
+        }
+      ]
+    },
+    {
+      "action": "cancel_reservation",
+      "tool": "cancel_reservation",
+      "read": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "needs_info": [
+        {
+          "info": "user_id",
+          "source": "C1",
+          "verified": true,
+          "order": 1
+        },
+        {
+          "info": "reservation_id",
+          "source": "C1",
+          "verified": true,
+          "order": 1
+        },
+        {
+          "info": "cancel_reason: change of plan, airline cancelled flight, or other reasons",
+          "source": "C1",
+          "verified": true,
+          "order": 1
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "no segment of the trip is flown yet (only the whole unflown trip can be cancelled)",
+          "actor": "agent",
+          "check": "data",
+          "source": "C3",
+          "verified": true,
+          "if_fails": "transfer_to_human_agents"
+        },
+        {
+          "any_of": [
+            {
+              "condition": "within 24 hours of booking",
+              "actor": "agent",
+              "check": "data",
+              "source": "C2",
+              "verified": true
+            },
+            {
+              "condition": "the airline cancelled the flight",
+              "actor": "agent",
+              "check": "data",
+              "source": "C2",
+              "verified": true
+            },
+            {
+              "condition": "cabin is business",
+              "actor": "agent",
+              "check": "data",
+              "source": "C2",
+              "verified": true
+            },
+            {
+              "all_of": [
+                {
+                  "condition": "travel insurance was bought",
+                  "actor": "agent",
+                  "check": "data",
+                  "source": "C2",
+                  "verified": true
+                },
+                {
+                  "condition": "the reason is health or weather (the insurance condition)",
+                  "actor": "user",
+                  "check": "dialogue",
+                  "source": "C2",
+                  "verified": true
+                }
+              ]
+            }
+          ],
+          "if_fails": "deny"
+        }
+      ],
+      "facts": [
+        {
+          "text": "the rules are strict regardless of membership status",
+          "source": "C2",
+          "verified": true
+        },
+        {
+          "text": "the API does not check these rules, the agent must check them before the call",
+          "source": "C2",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "action": "send_certificate",
+      "tool": "send_certificate",
+      "read": [
+        "R1",
+        "R2",
+        "R3"
+      ],
+      "needs_info": [],
+      "conditions": [
+        {
+          "condition": "the user complains and explicitly asks for compensation; never offer it first",
+          "actor": "user",
+          "check": "dialogue",
+          "source": "R3",
+          "verified": true
+        },
+        {
+          "any_of": [
+            {
+              "condition": "user is a silver or gold member",
+              "actor": "agent",
+              "check": "data",
+              "source": "R1",
+              "verified": true
+            },
+            {
+              "condition": "the reservation has travel insurance",
+              "actor": "agent",
+              "check": "data",
+              "source": "R1",
+              "verified": true
+            },
+            {
+              "condition": "the user flies business",
+              "actor": "agent",
+              "check": "data",
+              "source": "R1",
+              "verified": true
+            }
+          ],
+          "if_fails": "deny",
+          "_note": "R3 says the same from the other side: no compensation for a regular member with no insurance in (basic) economy"
+        },
+        {
+          "any_of": [
+            {
+              "all_of": [
+                {
+                  "condition": "the complaint is about a cancelled flight in the reservation",
+                  "actor": "user",
+                  "check": "dialogue",
+                  "source": "R1",
+                  "verified": true
+                },
+                {
+                  "condition": "the facts are confirmed (the flight really was cancelled)",
+                  "actor": "agent",
+                  "check": "data",
+                  "source": "R1",
+                  "verified": true
+                }
+              ],
+              "amount": "$100 x number of passengers"
+            },
+            {
+              "all_of": [
+                {
+                  "condition": "the complaint is about a delayed flight and the user wants to change or cancel the reservation",
+                  "actor": "user",
+                  "check": "dialogue",
+                  "source": "R2",
+                  "verified": true
+                },
+                {
+                  "condition": "the facts are confirmed (the flight really was delayed)",
+                  "actor": "agent",
+                  "check": "data",
+                  "source": "R2",
+                  "verified": true
+                },
+                {
+                  "condition": "the change or cancellation is done before the certificate is sent",
+                  "actor": "agent",
+                  "check": "data",
+                  "source": "R2",
+                  "verified": true,
+                  "must_happen_before": "send_certificate"
+                }
+              ],
+              "amount": "$50 x number of passengers"
+            }
+          ],
+          "if_fails": "deny"
+        }
+      ]
+    }
+  ]
+}
