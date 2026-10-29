@@ -1,6 +1,0 @@
-{"tool": "cancel_reservation", "decision": "no_call", "args_changed": false}
-{"tool": "book_reservation", "decision": "no_call", "args_changed": false}
-{"tool": "update_reservation_flights", "decision": "repeat", "args_changed": true}
-{"tool": "cancel_reservation", "decision": "repeat", "args_changed": false}
-{"tool": "book_reservation", "decision": "no_call", "args_changed": false}
-{"tool": "book_reservation", "decision": "repeat", "args_changed": true}
