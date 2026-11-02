@@ -1,0 +1,9 @@
+model,arm,passed dialogues,with an illegal tool call,with a dialogue violation (G1/B5/R3),with either
+gemini,baseline,210,18,10,27 (13%)
+gemini,validator,229,0,15,15 (7%)
+gemini,shallow,208,11,6,17 (8%)
+gemini,semi-deep,208,1,8,9 (4%)
+qwen,qwen base,59,2,11,12 (20%)
+qwen,qwen sft,101,3,3,5 (5%)
+qwen,qwen deep,136,3,0,3 (2%)
+qwen,qwen validator,156,0,16,16 (10%)

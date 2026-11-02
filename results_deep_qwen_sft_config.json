@@ -1,0 +1,28 @@
+{
+  "BASE_MODEL": "Qwen/Qwen3-8B",
+  "SERVED_BASE": "qwen3-8b",
+  "AGENT_THINKING": false,
+  "AGENT_MAX_TOKENS": 4096,
+  "MAX_MODEL_LEN": 32768,
+  "GPU_MEM": "0.85",
+  "SOURCE_DIRS": [
+    "results_gemini_baseline",
+    "results_gemini_validator",
+    "results_gemini_shallow",
+    "results_gemini_semideep"
+  ],
+  "N_FOLDS": 5,
+  "MAX_POS_PER_TASK": 8,
+  "MAX_TRAIN_LEN": 16384,
+  "LORA_R": 16,
+  "LORA_ALPHA": 32,
+  "LORA_DROPOUT": 0.05,
+  "LR": 0.0001,
+  "EPOCHS": 1,
+  "GRAD_ACCUM": 8,
+  "PENALTY": 0.5,
+  "SEED": 0,
+  "arm": "qwen_sft",
+  "user_model": "gemini-3.1-flash-lite",
+  "validator": false
+}

@@ -1,0 +1,495 @@
+{
+  "how_to_fill": "Policy graph for tau2-bench telecom, same schema as airline_policy_graph.json. Each condition: condition, actor (agent or user), check (data = the agent can check it in tool results; dialogue = only visible in the conversation; device = only visible on the user's phone), source (bullet id), if_fails (default deny, G3). any_of / all_of = OR / AND. 'order' in needs_info = must be asked in that order. 'must_happen_before' = this step must be done before the named action. New for telecom: 'procedures' = troubleshooting steps the agent must guide the USER to do on their own phone (diagnose with a user read tool, then fix with a user write tool), with 'prerequisite' and 'then' for order.",
+  "status": "First draft written with AI help from main_policy.md and tech_support_manual.md (tau2-bench commit da0835f); every rule must be checked by hand against the two files.",
+  "rule_of_thumb": "Graph = same content as main_policy.md + tech_support_manual.md, only the form differs. Nothing added, nothing dropped.",
+  "source_ids": "Main policy: G1-G6 global, L1 customer lookup, P1-P7 overdue bill payment, S1-S4 line suspension, F1-F4 data refueling, CP1 change plan, RO1 data roaming. Tech support manual: T0 identify customer + try all ways before transfer, SV1-SV4 cellular service, MD1-MD7 mobile data, MM1-MM5 MMS. Numbered top to bottom in each file.",
+  "info_only": [
+    {
+      "source": "D1",
+      "text": "customer profile fields: customer ID, full name, date of birth, email, phone number, address, account status, created date, payment methods, line IDs, bill IDs, last extension date, goodwill credit usage"
+    },
+    {
+      "source": "D2",
+      "text": "account status: Active, Suspended, Pending Verification, Closed; line status: Active, Suspended, Pending Activation, Closed; bill status: Draft, Issued, Paid, Overdue, Awaiting Payment, Disputed"
+    },
+    {
+      "source": "D3",
+      "text": "the current time is 2025-02-25 12:08:00 EST"
+    }
+  ],
+  "global_rules": [
+    {
+      "condition": "give no information, knowledge or procedures not given by the user or available tools; no subjective recommendations or comments",
+      "actor": "agent",
+      "check": "dialogue",
+      "source": "G1",
+      "verified": false
+    },
+    {
+      "condition": "make one tool call at a time; never call a tool and reply to the user in the same turn",
+      "actor": "agent",
+      "check": "dialogue",
+      "source": "G2",
+      "verified": false
+    },
+    {
+      "condition": "deny user requests that are against this policy",
+      "actor": "agent",
+      "check": "dialogue",
+      "source": "G3",
+      "verified": false
+    },
+    {
+      "condition": "transfer to a human agent if and only if the request cannot be handled within the scope of the agent's actions",
+      "actor": "agent",
+      "check": "dialogue",
+      "source": "G4",
+      "verified": false
+    },
+    {
+      "condition": "to transfer: first call transfer_to_human_agents, then send the message 'YOU ARE BEING TRANSFERRED TO A HUMAN AGENT. PLEASE HOLD ON.'",
+      "actor": "agent",
+      "check": "dialogue",
+      "source": "G5",
+      "verified": false
+    },
+    {
+      "condition": "try your best (all possible ways) to resolve the issue before transferring to a human agent",
+      "actor": "agent",
+      "check": "dialogue",
+      "source": "G6",
+      "verified": false
+    },
+    {
+      "condition": "look up the customer by phone number, customer ID, or full name with date of birth (date of birth is required for a name lookup)",
+      "actor": "agent",
+      "check": "data",
+      "source": "L1",
+      "verified": false
+    },
+    {
+      "condition": "for technical support, first identify the customer",
+      "actor": "agent",
+      "check": "data",
+      "source": "T0",
+      "verified": false
+    }
+  ],
+  "actions": [
+    {
+      "action": "send_payment_request",
+      "tool": "send_payment_request",
+      "read": [
+        "P1",
+        "P2",
+        "P3",
+        "P4",
+        "P7"
+      ],
+      "needs_info": [
+        {
+          "info": "customer (identified by phone number, customer ID, or full name + date of birth)",
+          "source": "L1",
+          "verified": false,
+          "order": 1
+        },
+        {
+          "info": "the overdue bill",
+          "source": "P1",
+          "verified": false
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "the bill status is Overdue (check the bill before sending)",
+          "actor": "agent",
+          "check": "data",
+          "source": "P1",
+          "verified": false
+        },
+        {
+          "condition": "the agent has checked the bill amount due",
+          "actor": "agent",
+          "check": "dialogue",
+          "source": "P2",
+          "verified": false
+        },
+        {
+          "condition": "the customer has no other bill in AWAITING PAYMENT status (only one at a time)",
+          "actor": "agent",
+          "check": "data",
+          "source": "P7",
+          "verified": false
+        }
+      ],
+      "facts": [
+        {
+          "text": "sending the request changes the bill status to AWAITING PAYMENT",
+          "source": "P3",
+          "verified": false
+        },
+        {
+          "text": "the send payment request tool does not check if the bill is overdue; the agent must check it before the call",
+          "source": "P7",
+          "verified": false
+        }
+      ],
+      "after": [
+        {
+          "text": "tell the user a payment request was sent and that they should check it with check_payment_request (user tool)",
+          "source": "P4",
+          "verified": false
+        },
+        {
+          "text": "if the user accepts, the payment is made with make_payment (user tool); the bill then becomes PAID",
+          "source": "P5",
+          "verified": false
+        },
+        {
+          "text": "check that the bill status is PAID before telling the user the bill is paid",
+          "source": "P6",
+          "verified": false
+        }
+      ]
+    },
+    {
+      "action": "resume_line",
+      "tool": "resume_line",
+      "read": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "SV4"
+      ],
+      "needs_info": [
+        {
+          "info": "customer and the line (phone number) the user means",
+          "source": "L1",
+          "verified": false,
+          "order": 1
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "the user has paid all their overdue bills",
+          "actor": "agent",
+          "check": "data",
+          "source": "S2",
+          "verified": false
+        },
+        {
+          "condition": "the line's contract end date is not in the past (even if all bills are paid)",
+          "actor": "agent",
+          "check": "data",
+          "source": "S3",
+          "verified": false,
+          "if_fails": "transfer_to_human_agents"
+        }
+      ],
+      "facts": [
+        {
+          "text": "a line can be suspended because the user has an overdue bill or because the line's contract end date is in the past; a suspended line has no service",
+          "source": "S1",
+          "verified": false
+        },
+        {
+          "text": "if the suspension cannot be lifted by the agent, escalate to technical support",
+          "source": "SV4",
+          "verified": false
+        }
+      ],
+      "after": [
+        {
+          "text": "after the line is resumed, the user must reboot the device (reboot_device) to get service; then verify service is restored",
+          "source": "S4",
+          "verified": false
+        }
+      ]
+    },
+    {
+      "action": "refuel_data",
+      "tool": "refuel_data",
+      "read": [
+        "F1",
+        "F2",
+        "F3",
+        "F4",
+        "MD6"
+      ],
+      "needs_info": [
+        {
+          "info": "how much data the user wants to refuel",
+          "source": "F2",
+          "verified": false,
+          "order": 1
+        },
+        {
+          "info": "the line of the phone number the user provided",
+          "source": "F4",
+          "verified": false
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "at most 2 GB is refueled",
+          "actor": "agent",
+          "check": "data",
+          "source": "F1",
+          "verified": false
+        },
+        {
+          "condition": "the agent confirmed the price (plan's refueling price per GB) with the user before the call",
+          "actor": "user",
+          "check": "dialogue",
+          "source": "F3",
+          "verified": false
+        },
+        {
+          "condition": "the data is applied to the line associated with the phone number the user provided",
+          "actor": "agent",
+          "check": "data",
+          "source": "F4",
+          "verified": false
+        }
+      ],
+      "facts": [
+        {
+          "text": "if data usage exceeds the plan's data limit, data connectivity is lost; the user can change to a plan with more data or refuel data",
+          "source": "MD6",
+          "verified": false
+        }
+      ]
+    },
+    {
+      "action": "change_plan",
+      "tool": "(no agent tool for this in the telecom tool list)",
+      "read": [
+        "CP1"
+      ],
+      "needs_info": [
+        {
+          "info": "which line the user wants to change the plan for",
+          "source": "CP1",
+          "verified": false,
+          "order": 1
+        },
+        {
+          "info": "the plan the user selects from the available plans",
+          "source": "CP1",
+          "verified": false,
+          "order": 2
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "the agent gathered the available plans, calculated the price of the new plan and confirmed the price with the user before applying it",
+          "actor": "user",
+          "check": "dialogue",
+          "source": "CP1",
+          "verified": false
+        }
+      ],
+      "facts": []
+    },
+    {
+      "action": "enable_roaming",
+      "tool": "enable_roaming",
+      "read": [
+        "RO1",
+        "MD3"
+      ],
+      "needs_info": [
+        {
+          "info": "the line of the phone number the user provided",
+          "source": "MD3",
+          "verified": false
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "the user is traveling outside their home network (abroad)",
+          "actor": "user",
+          "check": "dialogue",
+          "source": "RO1",
+          "verified": false
+        },
+        {
+          "condition": "the line is not roaming enabled yet",
+          "actor": "agent",
+          "check": "data",
+          "source": "RO1",
+          "verified": false
+        }
+      ],
+      "facts": [
+        {
+          "text": "roaming is enabled at no cost for the user",
+          "source": "RO1",
+          "verified": false
+        },
+        {
+          "text": "the user must also turn Data Roaming ON on the phone (toggle_roaming)",
+          "source": "MD3",
+          "verified": false
+        }
+      ]
+    },
+    {
+      "action": "transfer_to_human_agents",
+      "tool": "transfer_to_human_agents",
+      "read": [
+        "G4",
+        "G5",
+        "G6",
+        "SV2",
+        "SV4"
+      ],
+      "needs_info": [],
+      "conditions": [
+        {
+          "condition": "the request cannot be handled within the scope of the agent's actions, after trying all possible ways",
+          "actor": "agent",
+          "check": "dialogue",
+          "source": "G4",
+          "verified": false
+        }
+      ],
+      "facts": [
+        {
+          "text": "escalate (transfer) when the SIM is Locked (PIN/PUK), or when a suspension cannot be lifted by the agent",
+          "source": "SV2",
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "procedures": [
+    {
+      "issue": "no cellular service",
+      "diagnose": "check_status_bar (no signal strength shown = no service)",
+      "prerequisite": null,
+      "steps": [
+        {
+          "if": "airplane mode is ON (check_status_bar or check_network_status)",
+          "fix": "guide the user to toggle_airplane_mode to turn it OFF",
+          "source": "SV1",
+          "verified": false
+        },
+        {
+          "if": "check_sim_status shows Missing",
+          "fix": "guide the user to reseat_sim_card",
+          "source": "SV2",
+          "verified": false
+        },
+        {
+          "if": "check_sim_status shows Locked (PIN/PUK)",
+          "fix": "escalate to technical support (transfer)",
+          "source": "SV2",
+          "verified": false
+        },
+        {
+          "if": "check_apn_settings shows Incorrect",
+          "fix": "guide the user to reset_apn_settings",
+          "then": "reboot_device",
+          "source": "SV3",
+          "verified": false
+        },
+        {
+          "if": "the line is suspended",
+          "fix": "follow resume_line rules; if allowed, resume and verify service; if not, escalate",
+          "then": "reboot_device",
+          "source": "SV4",
+          "verified": false
+        }
+      ]
+    },
+    {
+      "issue": "mobile data not working or slow",
+      "diagnose": "run_speed_test ('no connection' = no data; any speed below Excellent = slow)",
+      "prerequisite": "cellular service must work first",
+      "steps": [
+        {
+          "if": "airplane mode is ON",
+          "fix": "guide the user to toggle_airplane_mode to turn it OFF",
+          "source": "MD1",
+          "verified": false
+        },
+        {
+          "if": "check_network_status shows mobile data disabled",
+          "fix": "guide the user to toggle_data to turn it ON",
+          "source": "MD2",
+          "verified": false
+        },
+        {
+          "if": "the user is abroad and Data Roaming is OFF on the phone",
+          "fix": "guide the user to toggle_roaming to turn it ON",
+          "source": "MD3",
+          "verified": false
+        },
+        {
+          "if": "the user is abroad and the line is not roaming enabled",
+          "fix": "enable_roaming (agent tool, no cost)",
+          "source": "MD3",
+          "verified": false
+        },
+        {
+          "if": "check_data_restriction_status shows Data Saver mode is ON",
+          "fix": "guide the user to toggle_data_saver_mode to turn it OFF",
+          "source": "MD4",
+          "verified": false
+        },
+        {
+          "if": "check_vpn_status shows VPN ON and connected with performance Poor",
+          "fix": "guide the user to disconnect_vpn",
+          "source": "MD5",
+          "verified": false
+        },
+        {
+          "if": "data usage of the line exceeds the plan's data limit",
+          "fix": "offer a plan with more data or refuel data (refuel_data rules)",
+          "source": "MD6",
+          "verified": false
+        },
+        {
+          "if": "check_network_mode_preference shows 2G or 3G",
+          "fix": "guide the user to set_network_mode_preference with mode '4g_5g_preferred'",
+          "source": "MD7",
+          "verified": false
+        }
+      ]
+    },
+    {
+      "issue": "cannot send MMS (picture/video messages)",
+      "diagnose": "can_send_mms",
+      "prerequisite": "cellular service and mobile data (any speed) must work first",
+      "steps": [
+        {
+          "if": "check_network_status shows 2G",
+          "fix": "guide the user to set_network_mode_preference to a mode with 3G/4G/5G (e.g. '4g_5g_preferred' or '4g_only')",
+          "source": "MM2",
+          "verified": false
+        },
+        {
+          "if": "check_apn_settings shows the MMSC URL is not set",
+          "fix": "guide the user to reset_apn_settings",
+          "then": "reboot_device",
+          "source": "MM3",
+          "verified": false
+        },
+        {
+          "if": "check_wifi_calling_status shows Wi-Fi Calling is ON",
+          "fix": "guide the user to toggle_wifi_calling to turn it OFF",
+          "source": "MM4",
+          "verified": false
+        },
+        {
+          "if": "check_app_permissions(app_name='messaging') does not list 'storage' and 'sms' as granted",
+          "fix": "guide the user to grant_app_permission(app_name='messaging', permission='storage') and (permission='sms')",
+          "source": "MM5",
+          "verified": false
+        }
+      ]
+    }
+  ]
+}

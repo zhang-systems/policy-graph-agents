@@ -1,0 +1,9 @@
+model,arm,(a) illegal tool calls: executed,(a) blocked by validator,(b) G1,(b) G3,(b) B5,(b) R3,(c) failed dialogues,(c) wrong arguments,(c) missing action,(c) missing output
+gemini,baseline,70,0,31,1,5,0,190,50,110,16
+gemini,validator,0,69,39,9,4,0,171,42,131,17
+gemini,shallow,31,0,22,9,0,0,192,55,122,16
+gemini,semi-deep,2,0,18,163,1,0,192,34,151,15
+qwen,qwen base,349,0,211,11,26,2,341,90,99,20
+qwen,qwen sft,182,0,60,4,5,1,299,71,147,26
+qwen,qwen deep,76,0,6,20,1,0,264,26,205,24
+qwen,qwen validator,0,407,162,10,16,0,244,75,137,25

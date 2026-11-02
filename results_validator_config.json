@@ -1,0 +1,16 @@
+{
+  "MODEL": "Qwen/Qwen3-32B-AWQ",
+  "SERVED": "qwen3-32b",
+  "MAX_LEN": 32768,
+  "GPU_MEM": "0.90",
+  "AGENT_THINKING": true,
+  "AGENT_MAX_TOKENS": 8192,
+  "CALL_TIMEOUT": 1800,
+  "EMPTY_REPLY_IS_FAIL": true,
+  "TEMPERATURE": 0.0,
+  "CONCURRENCY": 4,
+  "ENV": "airline",
+  "N_TASKS": 50,
+  "N_TRIALS": 8,
+  "policy": "prose wiki.md + runtime validator (data rules of airline_policy_graph.json)"
+}
