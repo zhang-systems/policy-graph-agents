@@ -55,7 +55,7 @@ Each model is compared only with its own arms (the agent model differs).
 
 ![pass^k curves of all arms](figures/all_arms_passk.png)
 
-*pass^k curves with 95% bootstrap CI, from notebook 10. Left: gemini-3.1-flash-lite arms (notebooks 05G–08). Right: Qwen3-8B arms (notebook 09).*
+*pass^k curves with 95% bootstrap CI. Left: gemini-3.1-flash-lite arms (notebooks 05G–08). Right: Qwen3-8B arms (notebook 09). This graph is from notebook 10.*
 
 **What I found**
 
