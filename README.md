@@ -42,18 +42,20 @@ I wanted to answer three questions:
 
 | Model | Arm | pass^1 | pass^8 | Drop 1→8 | Illegal tool calls executed |
 |---|---|---|---|---|---|
-| Gemini | Baseline (prose policy) | 0.525 | 0.360 | 31% | 70 |
-| Gemini | Runtime validator | **0.573** | **0.380** | 34% | 0 (69 blocked) |
-| Gemini | Shallow KiL | 0.520 | 0.340 | 35% | 31 |
-| Gemini | Semi-deep KiL | 0.520 | 0.360 | 31% | 2 |
-| Qwen3-8B | Base | 0.147 | 0.020 | 86% | 349 |
-| Qwen3-8B | SFT (no penalty) | 0.253 | 0.040 | 84% | 182 |
-| Qwen3-8B | Deep KiL | 0.340 | 0.120 | 65% | 76 |
-| Qwen3-8B | Runtime validator | **0.390** | **0.200** | 49% | 0 (407 blocked) |
+| Gemini (05G–08) | Baseline (prose policy) | 0.525 | 0.360 | 31% | 70 |
+| Gemini (05G–08) | Runtime validator | **0.573** | **0.380** | 34% | 0 (69 blocked) |
+| Gemini (05G–08) | Shallow KiL | 0.520 | 0.340 | 35% | 31 |
+| Gemini (05G–08) | Semi-deep KiL | 0.520 | 0.360 | 31% | 2 |
+| Qwen3-8B (09) | Base | 0.147 | 0.020 | 86% | 349 |
+| Qwen3-8B (09) | SFT (no penalty) | 0.253 | 0.040 | 84% | 182 |
+| Qwen3-8B (09) | Deep KiL | 0.340 | 0.120 | 65% | 76 |
+| Qwen3-8B (09) | Runtime validator | **0.390** | **0.200** | 49% | 0 (407 blocked) |
 
 Each model is compared only with its own arms (the agent model differs).
 
 ![pass^k curves of all arms](figures/all_arms_passk.png)
+
+*pass^k curves with 95% bootstrap CI, from notebook 10. Left: gemini-3.1-flash-lite arms (notebooks 05G–08). Right: Qwen3-8B arms (notebook 09).*
 
 **What I found**
 
