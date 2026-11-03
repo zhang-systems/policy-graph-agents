@@ -33,8 +33,9 @@ I wanted to answer three questions:
 5. **Built deep KiL on an open model.** Deep KiL changes the model's weights with my own loss, which the Gemini API does not allow. So I used **Qwen3-8B** (LoRA, one A100 40 GB) as the agent and kept the same Gemini user simulator. Training data come from the 1,600 Gemini dialogues: passing, rule-following dialogues as positives, and rule-breaking write calls (found by the validator's checker) as negatives. Loss = next-token loss + 0.5 × a penalty on the violating calls. Tasks are split into 5 folds, so no adapter is tested on a task it saw in training. Four arms on the same model: `qwen_base` (no training), `qwen_sft` (fine-tuning only, no penalty), `qwen_deep` (fine-tuning + penalty = **deep KiL**), `qwen_validator` (H1 control).
 6. **Compared all arms and read failed dialogues by hand.** Violations in three types (illegal tool calls, dialogue rules, reasoning/argument errors), the τ-bench failure categories, and a hand-check of 30 failed dialogues: is the error the agent's, the simulator's, or the benchmark's?
 7. **Tested the tools, not just the agent.** I ran the validator on τ-bench's own answer keys. This is how I found that some answer keys break the written policy (see Result).
-8. **Repeated the main test on τ²-bench telecom.** 40 test tasks × 8 trials; baseline, validator (5 data rules), and shallow KiL with a new telecom policy graph (8 global rules, 12 action conditions, 3 troubleshooting procedures with 17 user-side steps).
-9. **Used AI tools in the workflow.** I used an AI coding assistant to draft code and the first version of the graph JSON. I verified the output with tests (for example, replaying every answer key through the validator) and by reading logs. One bug, a user-simulator setting that differed between arms, was caught this way and fixed before any result was used.
+8. **Repeated the main test on τ²-bench telecom.** 40 test tasks × 8 trials; baseline, validator (5 data rules), and shallow KiL with a new telecom policy graph (8 global rules, 12 action conditions, 3 troubleshooting procedures with 17 user-side steps). I compared the arms the same way as for airline (paired tests, results by issue type, violations replayed from the saved dialogues) and read 15 failed dialogues by hand. Semi-deep and deep KiL were not run on telecom: the budget was used up, and most fixes happen on the user's phone, where a per-action rule check does not apply.
+9. **Checked the newer answer keys.** I ran my airline validator on τ²-bench's *airline* answer keys to see if the 8 broken answer keys from τ-bench are still there.
+10. **Used AI tools in the workflow.** I used an AI coding assistant to draft code and the first version of the graph JSON. I verified the output with tests (for example, replaying every answer key through the validator) and by reading logs. One bug, a user-simulator setting that differed between arms, was caught this way and fixed before any result was used. For both hand-checks, AI first suggested a label for each dialogue; I read every dialogue and confirmed or changed the label.
 
 ## Result
 
@@ -69,6 +70,7 @@ Each model is compared only with its own arms (the agent model differs).
 - **Side findings about the benchmark:**
   - 8 of the 50 airline answer keys (tasks 10, 16, 19, 26, 27, 34, 45, 46) break τ-bench's own written policy. For example, task 26's answer key cancels a trip that has already been flown. I report results on all 50 tasks and on the 42 clean tasks.
   - `update_reservation_flights` changes the flights but does not save a new cabin class.
+  - **τ²-bench fixed all 8 broken answer keys.** On τ²-bench's airline answer keys my validator finds 0 tasks that break the policy (τ-bench: 8). In 6 of the 8, the new answer key makes no write call at all (the right answer is to refuse); in tasks 16 and 19 it uses a different write call that follows the policy. This supports reporting the 42 clean tasks separately. (Checked with my 24 data rules only; notebook 13.)
 
 ### τ²-bench telecom (40 tasks × 8 trials per arm)
 
@@ -78,9 +80,26 @@ Each model is compared only with its own arms (the agent model differs).
 | Runtime validator | 0.316 | 0.125 | 60% | 2.4 | 45 | 16.32 |
 | Shallow KiL | **0.434** | 0.175 | 60% | **4.5** | 0 | 19.92 |
 
-- **Here shallow KiL is ahead of the validator at pass^1** (+0.118), because the graph's troubleshooting steps make the agent guide the user through almost twice as many phone checks. A validator cannot see the user's phone: it can check only 11% of the answer-key calls.
-- **But the curve is not flatter:** shallow's pass^8 falls back to the baseline's 0.175.
-- Paired significance tests for telecom are not done yet (next step).
+![pass^k curves, telecom](figures/telecom_passk.png)
+
+*pass^k curves with 95% bootstrap CI for the three telecom arms (notebook 13).*
+
+**Paired Δ over the same 40 tasks (95% bootstrap CI, \* = significant; notebook 13)**
+
+| Compare | Δpass^1 | Δpass^2 | Δpass^4 | Δpass^8 |
+|---|---|---|---|---|
+| Shallow − validator | **+0.119 [+0.056, +0.188] \*** | **+0.074 [+0.014, +0.143] \*** | +0.054 [−0.022, +0.132] | +0.050 [−0.075, +0.175] |
+| Shallow − baseline | **+0.122 [+0.059, +0.191] \*** | **+0.079 [+0.018, +0.149] \*** | +0.043 [−0.023, +0.117] | +0.000 [−0.100, +0.100] |
+| Validator − baseline | +0.003 [−0.028, +0.034] | +0.004 [−0.023, +0.034] | −0.010 [−0.061, +0.041] | −0.050 [−0.150, +0.050] |
+
+**What I found**
+
+- **Here shallow KiL beats the validator, unlike airline,** at pass^1 and pass^2 (significant). The gain is mostly on mobile-data tasks (pass^1 0.472 vs 0.167). Service tasks are easy for every arm (about 0.75), and MMS tasks are almost never solved (pass^8 = 0 for all arms).
+- **Why:** the graph's troubleshooting steps make the agent guide the user through more phone fixes (4.5 vs 2.4 user tool calls per dialogue; 40% vs 28% of the needed fixes done in failed dialogues). A validator cannot see the user's phone: it can check only 11% of the answer-key calls.
+- **But the curve is not flatter.** The gap is not significant at k = 4 and 8, and shallow's pass^8 equals the baseline's (0.175). Shallow turns more "never pass" tasks into "sometimes pass" tasks (never: 19 → 11), but not into "always pass" tasks. So H1, as stated, is not supported here either.
+- **The validator does not change the score** (no Δ is significant), but it stops every checkable violation: 45 calls blocked.
+- **Final-state scoring hides violations.** 46 of the baseline's 100 passing dialogues resume a line whose contract has ended, which `main_policy.md` forbids ("not allowed … even if the user has paid"), and still get full reward (shallow: 36 of 139; validator: 0).
+- **Hand-check of 15 failed dialogues (5 per arm):** the agent caused all 15. The common pattern: the agent calls tools that only exist on the user's phone (e.g. `toggle_airplane_mode`), gets "not found", and transfers to a human instead of telling the user what to do (13 of 15 end in a transfer).
 
 ---
 
@@ -103,6 +122,7 @@ notebooks/
   10_Compare_All_Arms.ipynb          all arms side by side, violation types, hand-check
   11_Tau2_Telecom_Setup.ipynb        tau2-bench install and 5-task pilot
   12_Tau2_Telecom_Arms.ipynb         telecom baseline, validator, shallow KiL
+  13_Tau2_Telecom_Compare.ipynb      telecom comparison, hand-check, tau2 airline answer-key check
 
 airline_policy_graph.json            the airline policy graph (master copy)
 settings_gemini.py                   settings shared by every Gemini arm
@@ -127,6 +147,7 @@ results_validator_BUG_user_thinking/ the run with the simulator bug (kept as a r
 results_compare/                     tables from notebook 10; handcheck/ = 30 read dialogues
 figures/                             plots used in this README and the report
 tau2_telecom/                        telecom code, policy graph, and results of the 3 arms
+tau2_telecom/results_compare/        tables from notebook 13; handcheck/ = 15 read dialogues
 ```
 
 ## How to run
@@ -148,6 +169,7 @@ The notebooks expect this exact path: `/content/drive/MyDrive/cmsc691-10-project
 - `10_Compare_All_Arms.ipynb`: reads the saved results of all 8 airline arms and recomputes pass^k, confidence intervals, paired tests, violation types, and the hand-check tables.
 - `06G_Gemini_Validator.ipynb`, answer-key test (the cell "test the checker on tau-bench's answer key"): replays τ-bench's answer keys through the validator. Run the cells above it first; cell 3 makes one Gemini test call, so it needs `GEMINI_API_KEY`, but the cost is close to zero.
 - `04_Policy_Graph.ipynb`: the last cells draw the full graph from the JSON without Neo4j.
+- `13_Tau2_Telecom_Compare.ipynb`: recomputes all telecom statistics from the saved dialogues and runs the τ²-bench airline answer-key check (see step 4 for where the files go).
 
 **3. Re-running an arm** (costs money or GPU time):
 
@@ -158,4 +180,4 @@ The notebooks expect this exact path: `/content/drive/MyDrive/cmsc691-10-project
 | 04 (Neo4j part) | CPU | Neo4j Aura login in Colab Secrets | free |
 | 11, 12 (telecom) | CPU | `GEMINI_API_KEY` | about $16–20 |
 
-**4. Telecom:** open `11_Tau2_Telecom_Setup.ipynb` and then `12_Tau2_Telecom_Arms.ipynb` in Colab. They create `/content/drive/MyDrive/cmsc691-10-tau2`, clone τ²-bench at commit `da0835f`, and write all their own code files. The saved results are in `tau2_telecom/results/`. To analyze them without re-running, copy each one to `tau2-bench/data/simulations/telecom_<arm>/results.json` and run the results cell of 12.
+**4. Telecom:** open `11_Tau2_Telecom_Setup.ipynb` and then `12_Tau2_Telecom_Arms.ipynb` in Colab. They create `/content/drive/MyDrive/cmsc691-10-tau2`, clone τ²-bench at commit `da0835f`, and write all their own code files. The saved results are in `tau2_telecom/results/`. To analyze them without re-running, run the install cells of 11, copy each result to `tau2-bench/data/simulations/telecom_<arm>/results.json`, copy `tau2_telecom/*.py` into `cmsc691-10-tau2/`, and run `13_Tau2_Telecom_Compare.ipynb` (free, CPU, about 2–3 minutes). Its last part also needs the airline project folder from step 1.
