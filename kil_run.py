@@ -5,6 +5,10 @@
 #                    write tool, the rules for that one action are retrieved from the graph
 #                    and shown to it; it must check each rule against the conversation and
 #                    the tool results, then either repeat the call or not call it.
+#   "rag"      (14): same moment and same check as semi-deep, but the rules come from vector
+#                    retrieval over the policy TEXT (wiki.md bullets most similar to the call),
+#                    with about the same number of characters as semi-deep shows. This tests
+#                    graph retrieval vs plain text retrieval.
 import json
 import os
 import runpy
@@ -15,7 +19,7 @@ import litellm
 import graph_text as gt
 
 MODE = os.environ["KIL_MODE"]
-assert MODE in ("shallow", "semideep"), MODE
+assert MODE in ("shallow", "semideep", "rag"), MODE
 G = gt.load()
 WRITE_TOOLS = {"book_reservation", "update_reservation_flights", "update_reservation_baggages",
                "update_reservation_passengers", "cancel_reservation", "send_certificate"}
@@ -27,21 +31,39 @@ if MODE == "shallow":
     import tau_bench.envs.airline.env as airline_env
     airline_env.WIKI = airline_env.WIKI + "\n\n" + gt.full_text(G)
 
-if MODE == "semideep":
-    # one tool can be two graph actions (change flights, or only the cabin)
-    ACTIONS = {"update_reservation_flights": ["update_reservation_flights", "upgrade_cabin"]}
+if MODE in ("semideep", "rag"):
+    import rag_text as rt   # graph_rules() is the same rule text as before; numpy only, no model
 
     def rules_for(tool):
-        names = ACTIONS.get(tool, [tool])
-        head = ("whichever of these fits the call" if len(names) > 1 else "")
-        return (head + "\n\n" if head else "") + "\n\n".join(gt.action_text(G, n) for n in names)
+        return rt.graph_rules(G, tool)
+
+    if MODE == "rag":
+        import tau_bench.envs.airline.env as airline_env
+        RET = rt.Retriever(airline_env.WIKI)   # embeds the wiki.md bullets once
+        RAG_LOG = os.environ.get("RAG_LOG", "rag_retrieved.jsonl")
+
+        def rag_rules(call):
+            name = call.function.name
+            q = rt.query_text(name, call.function.arguments)
+            with _lock:
+                picked = RET.retrieve(q, len(rules_for(name)))   # same budget as semi-deep
+                with open(RAG_LOG, "a") as f:
+                    f.write(json.dumps({"tool": name, "chunks": [c["id"] for c, _ in picked],
+                                        "sources": [c["source"] for c, _ in picked],
+                                        "needed": rt.needed(rules_for(name)),
+                                        "scores": [round(s, 3) for _, s in picked]}) + "\n")
+            return "\n\n".join(f"- [{c['section']}] {c['text']}" for c, _ in picked)
 
     def check_prompt(call):
         name = call.function.name
+        if MODE == "rag":
+            src, rules = "retrieved from the policy text", rag_rules(call)
+        else:
+            src, rules = "from the policy graph", rules_for(name)
         return (
             f"[Policy check before acting] You are about to call {name} with "
-            f"{call.function.arguments}. These are the rules for this action, from the policy graph:\n\n"
-            f"{rules_for(name)}\n\n"
+            f"{call.function.arguments}. These are the rules for this action, {src}:\n\n"
+            f"{rules}\n\n"
             "Go through the rules one by one. For each, say in one short line whether it is met, "
             "not met, or unknown, using only this conversation and the tool results so far. "
             "Then: if every rule is met, make the same tool call again (fix the arguments if needed). "

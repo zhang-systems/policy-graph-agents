@@ -1,0 +1,60 @@
+{"tool": "update_reservation_flights", "chunks": [16, 20, 15, 2, 22, 1], "sources": ["M2", "M6", "M1", "G1", "C2", null], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.466, 0.388, 0.363, 0.336, 0.326, 0.316]}
+{"tool": "cancel_reservation", "chunks": [21, 26, 22, 23], "sources": ["C1", "R2", "C2", "C3"], "needed": ["C1", "C2", "C3"], "scores": [0.565, 0.501, 0.495, 0.452]}
+{"tool": "book_reservation", "chunks": [12, 20, 11, 13, 5, 16], "sources": ["B3", "M6", "B2", "B4", "G4", "M2"], "needed": ["B1", "B2", "B3", "B4", "B5", "D3", "G1"], "scores": [0.35, 0.297, 0.293, 0.291, 0.27, 0.27]}
+{"tool": "update_reservation_flights", "chunks": [16, 20, 12, 15, 2, 22], "sources": ["M2", "M6", "B3", "M1", "G1", "C2"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.378, 0.349, 0.29, 0.28, 0.277, 0.261]}
+{"tool": "cancel_reservation", "chunks": [21, 26, 22, 23], "sources": ["C1", "R2", "C2", "C3"], "needed": ["C1", "C2", "C3"], "scores": [0.565, 0.501, 0.495, 0.452]}
+{"tool": "update_reservation_flights", "chunks": [16, 20, 12, 15, 2, 26], "sources": ["M2", "M6", "B3", "M1", "G1", "R2"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.35, 0.33, 0.287, 0.271, 0.264, 0.261]}
+{"tool": "update_reservation_flights", "chunks": [16, 20, 15, 2, 22, 17], "sources": ["M2", "M6", "M1", "G1", "C2", "M3"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.464, 0.393, 0.352, 0.333, 0.32, 0.312]}
+{"tool": "update_reservation_flights", "chunks": [20, 16, 15, 12, 2, 26], "sources": ["M6", "M2", "M1", "B3", "G1", "R2"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.44, 0.433, 0.355, 0.338, 0.332, 0.322]}
+{"tool": "update_reservation_flights", "chunks": [16, 20, 15, 2, 22, 1], "sources": ["M2", "M6", "M1", "G1", "C2", null], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.465, 0.39, 0.357, 0.333, 0.323, 0.309]}
+{"tool": "update_reservation_flights", "chunks": [16, 20, 12, 26, 2], "sources": ["M2", "M6", "B3", "R2", "G1"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.345, 0.334, 0.287, 0.26, 0.258]}
+{"tool": "update_reservation_flights", "chunks": [16, 20, 12, 26, 15, 2], "sources": ["M2", "M6", "B3", "R2", "M1", "G1"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.33, 0.323, 0.282, 0.257, 0.252, 0.248]}
+{"tool": "update_reservation_baggages", "chunks": [20, 18, 2], "sources": ["M6", "M4", "G1"], "needed": ["G1", "M1", "M4"], "scores": [0.479, 0.433, 0.414]}
+{"tool": "update_reservation_flights", "chunks": [16, 20, 15, 2, 12, 26], "sources": ["M2", "M6", "M1", "G1", "B3", "R2"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.432, 0.408, 0.34, 0.33, 0.316, 0.307]}
+{"tool": "update_reservation_baggages", "chunks": [20, 18, 2], "sources": ["M6", "M4", "G1"], "needed": ["G1", "M1", "M4"], "scores": [0.479, 0.433, 0.414]}
+{"tool": "update_reservation_flights", "chunks": [16, 20, 15, 2, 12, 26], "sources": ["M2", "M6", "M1", "G1", "B3", "R2"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.431, 0.395, 0.337, 0.323, 0.313, 0.302]}
+{"tool": "update_reservation_flights", "chunks": [16, 20, 15, 12, 2, 26], "sources": ["M2", "M6", "M1", "B3", "G1", "R2"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.438, 0.427, 0.348, 0.333, 0.328, 0.318]}
+{"tool": "update_reservation_flights", "chunks": [16, 20, 15, 2, 12, 26], "sources": ["M2", "M6", "M1", "G1", "B3", "R2"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.449, 0.432, 0.355, 0.34, 0.33, 0.321]}
+{"tool": "update_reservation_baggages", "chunks": [20, 18, 2], "sources": ["M6", "M4", "G1"], "needed": ["G1", "M1", "M4"], "scores": [0.462, 0.438, 0.402]}
+{"tool": "update_reservation_flights", "chunks": [16, 20, 15, 12, 2, 26], "sources": ["M2", "M6", "M1", "B3", "G1", "R2"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.441, 0.429, 0.35, 0.336, 0.332, 0.32]}
+{"tool": "update_reservation_baggages", "chunks": [20, 18, 2], "sources": ["M6", "M4", "G1"], "needed": ["G1", "M1", "M4"], "scores": [0.464, 0.424, 0.405]}
+{"tool": "update_reservation_baggages", "chunks": [20, 18, 2], "sources": ["M6", "M4", "G1"], "needed": ["G1", "M1", "M4"], "scores": [0.45, 0.421, 0.404]}
+{"tool": "cancel_reservation", "chunks": [21, 22, 26, 15], "sources": ["C1", "C2", "R2", "M1"], "needed": ["C1", "C2", "C3"], "scores": [0.592, 0.525, 0.508, 0.47]}
+{"tool": "cancel_reservation", "chunks": [21, 22, 26, 15], "sources": ["C1", "C2", "R2", "M1"], "needed": ["C1", "C2", "C3"], "scores": [0.592, 0.525, 0.508, 0.47]}
+{"tool": "cancel_reservation", "chunks": [21, 22, 26, 15], "sources": ["C1", "C2", "R2", "M1"], "needed": ["C1", "C2", "C3"], "scores": [0.592, 0.525, 0.508, 0.47]}
+{"tool": "book_reservation", "chunks": [12, 20, 13, 25, 26], "sources": ["B3", "M6", "B4", "R1", "R2"], "needed": ["B1", "B2", "B3", "B4", "B5", "D3", "G1"], "scores": [0.346, 0.297, 0.286, 0.271, 0.271]}
+{"tool": "book_reservation", "chunks": [12, 20, 13, 26], "sources": ["B3", "M6", "B4", "R2"], "needed": ["B1", "B2", "B3", "B4", "B5", "D3", "G1"], "scores": [0.379, 0.333, 0.3, 0.29]}
+{"tool": "book_reservation", "chunks": [12, 20, 13, 26], "sources": ["B3", "M6", "B4", "R2"], "needed": ["B1", "B2", "B3", "B4", "B5", "D3", "G1"], "scores": [0.39, 0.367, 0.342, 0.298]}
+{"tool": "cancel_reservation", "chunks": [21, 22, 26, 23], "sources": ["C1", "C2", "R2", "C3"], "needed": ["C1", "C2", "C3"], "scores": [0.586, 0.515, 0.507, 0.46]}
+{"tool": "update_reservation_baggages", "chunks": [18, 16], "sources": ["M4", "M2"], "needed": ["G1", "M1", "M4"], "scores": [0.439, 0.415]}
+{"tool": "update_reservation_flights", "chunks": [20, 16, 15, 12, 2, 26], "sources": ["M6", "M2", "M1", "B3", "G1", "R2"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.439, 0.432, 0.348, 0.341, 0.331, 0.313]}
+{"tool": "update_reservation_flights", "chunks": [16, 20, 15, 2, 12, 1, 26], "sources": ["M2", "M6", "M1", "G1", "B3", null, "R2"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.435, 0.392, 0.346, 0.325, 0.313, 0.301, 0.301]}
+{"tool": "update_reservation_flights", "chunks": [16, 20, 15, 2, 12, 26], "sources": ["M2", "M6", "M1", "G1", "B3", "R2"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.439, 0.407, 0.346, 0.329, 0.324, 0.31]}
+{"tool": "update_reservation_flights", "chunks": [20, 16, 15, 12, 2, 26], "sources": ["M6", "M2", "M1", "B3", "G1", "R2"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.444, 0.444, 0.356, 0.346, 0.342, 0.32]}
+{"tool": "update_reservation_flights", "chunks": [16, 20, 15, 2, 12, 1, 26], "sources": ["M2", "M6", "M1", "G1", "B3", null, "R2"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.441, 0.423, 0.357, 0.339, 0.331, 0.315, 0.313]}
+{"tool": "update_reservation_flights", "chunks": [16, 20, 15, 2, 12, 1, 26], "sources": ["M2", "M6", "M1", "G1", "B3", null, "R2"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.44, 0.42, 0.356, 0.341, 0.329, 0.317, 0.314]}
+{"tool": "update_reservation_flights", "chunks": [16, 20, 15, 2, 12, 1, 26], "sources": ["M2", "M6", "M1", "G1", "B3", null, "R2"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.435, 0.411, 0.345, 0.335, 0.319, 0.302, 0.301]}
+{"tool": "cancel_reservation", "chunks": [21, 26, 22, 23], "sources": ["C1", "R2", "C2", "C3"], "needed": ["C1", "C2", "C3"], "scores": [0.566, 0.51, 0.503, 0.449]}
+{"tool": "update_reservation_flights", "chunks": [16, 20, 15, 2, 12, 22], "sources": ["M2", "M6", "M1", "G1", "B3", "C2"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.447, 0.395, 0.356, 0.335, 0.314, 0.309]}
+{"tool": "update_reservation_flights", "chunks": [16, 20, 15, 2, 12, 22], "sources": ["M2", "M6", "M1", "G1", "B3", "C2"], "needed": ["G1", "M1", "M2", "M3", "M6"], "scores": [0.452, 0.394, 0.363, 0.341, 0.307, 0.305]}
+{"tool": "cancel_reservation", "chunks": [21, 22, 26, 15], "sources": ["C1", "C2", "R2", "M1"], "needed": ["C1", "C2", "C3"], "scores": [0.557, 0.49, 0.46, 0.452]}
+{"tool": "cancel_reservation", "chunks": [21, 22, 26, 15], "sources": ["C1", "C2", "R2", "M1"], "needed": ["C1", "C2", "C3"], "scores": [0.581, 0.526, 0.503, 0.454]}
+{"tool": "cancel_reservation", "chunks": [21, 22, 26, 15], "sources": ["C1", "C2", "R2", "M1"], "needed": ["C1", "C2", "C3"], "scores": [0.581, 0.526, 0.503, 0.454]}
+{"tool": "cancel_reservation", "chunks": [21, 22, 26, 15], "sources": ["C1", "C2", "R2", "M1"], "needed": ["C1", "C2", "C3"], "scores": [0.571, 0.515, 0.505, 0.45]}
+{"tool": "cancel_reservation", "chunks": [21, 26, 22, 25], "sources": ["C1", "R2", "C2", "R1"], "needed": ["C1", "C2", "C3"], "scores": [0.563, 0.519, 0.515, 0.451]}
+{"tool": "cancel_reservation", "chunks": [21, 22, 26, 15], "sources": ["C1", "C2", "R2", "M1"], "needed": ["C1", "C2", "C3"], "scores": [0.571, 0.515, 0.505, 0.45]}
+{"tool": "cancel_reservation", "chunks": [21, 22, 26, 15], "sources": ["C1", "C2", "R2", "M1"], "needed": ["C1", "C2", "C3"], "scores": [0.573, 0.522, 0.516, 0.464]}
+{"tool": "cancel_reservation", "chunks": [21, 22, 26, 15], "sources": ["C1", "C2", "R2", "M1"], "needed": ["C1", "C2", "C3"], "scores": [0.571, 0.515, 0.505, 0.45]}
+{"tool": "cancel_reservation", "chunks": [21, 22, 26, 15], "sources": ["C1", "C2", "R2", "M1"], "needed": ["C1", "C2", "C3"], "scores": [0.579, 0.541, 0.498, 0.469]}
+{"tool": "cancel_reservation", "chunks": [21, 22, 26, 23], "sources": ["C1", "C2", "R2", "C3"], "needed": ["C1", "C2", "C3"], "scores": [0.574, 0.516, 0.507, 0.449]}
+{"tool": "cancel_reservation", "chunks": [21, 22, 26, 25], "sources": ["C1", "C2", "R2", "R1"], "needed": ["C1", "C2", "C3"], "scores": [0.554, 0.516, 0.513, 0.445]}
+{"tool": "book_reservation", "chunks": [13, 11, 12, 14, 5, 25], "sources": ["B4", "B2", "B3", "B5", "G4", "R1"], "needed": ["B1", "B2", "B3", "B4", "B5", "D3", "G1"], "scores": [0.37, 0.327, 0.324, 0.286, 0.282, 0.277]}
+{"tool": "cancel_reservation", "chunks": [21, 22, 26, 15], "sources": ["C1", "C2", "R2", "M1"], "needed": ["C1", "C2", "C3"], "scores": [0.595, 0.518, 0.514, 0.493]}
+{"tool": "cancel_reservation", "chunks": [21, 22, 26, 23], "sources": ["C1", "C2", "R2", "C3"], "needed": ["C1", "C2", "C3"], "scores": [0.585, 0.507, 0.497, 0.463]}
+{"tool": "cancel_reservation", "chunks": [21, 26, 22, 15], "sources": ["C1", "R2", "C2", "M1"], "needed": ["C1", "C2", "C3"], "scores": [0.575, 0.512, 0.495, 0.454]}
+{"tool": "cancel_reservation", "chunks": [21, 22, 26, 15], "sources": ["C1", "C2", "R2", "M1"], "needed": ["C1", "C2", "C3"], "scores": [0.592, 0.527, 0.504, 0.465]}
+{"tool": "cancel_reservation", "chunks": [21, 22, 26, 15], "sources": ["C1", "C2", "R2", "M1"], "needed": ["C1", "C2", "C3"], "scores": [0.564, 0.512, 0.496, 0.451]}
+{"tool": "cancel_reservation", "chunks": [21, 22, 26, 15], "sources": ["C1", "C2", "R2", "M1"], "needed": ["C1", "C2", "C3"], "scores": [0.564, 0.512, 0.496, 0.451]}
+{"tool": "update_reservation_passengers", "chunks": [16, 15], "sources": ["M2", "M1"], "needed": ["G1", "M1", "M5"], "scores": [0.366, 0.36]}
+{"tool": "update_reservation_passengers", "chunks": [16, 15], "sources": ["M2", "M1"], "needed": ["G1", "M1", "M5"], "scores": [0.374, 0.368]}
+{"tool": "cancel_reservation", "chunks": [21, 26, 22, 23], "sources": ["C1", "R2", "C2", "C3"], "needed": ["C1", "C2", "C3"], "scores": [0.559, 0.501, 0.499, 0.447]}
