@@ -10,8 +10,9 @@ I test this on the airline domain of [τ-bench](https://github.com/sierra-resear
 
 <!-- In the GitHub editor, drag policy-graph-demo-720p.mp4 onto the next line. GitHub replaces it with a video link. -->
 
+https://github.com/user-attachments/assets/369d70c0-2beb-4179-b856-d330fdca0154
 
-https://github.com/user-attachments/assets/735c52ea-0d7f-41ca-9ed2-707c02c1b1e4
+
 
 
 *Real dialogues replayed side by side: the same task passing once and failing the next time, the validator blocking a cancellation the policy forbids, and graph rules vs. text retrieval (RAG) on the same task.*
