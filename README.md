@@ -2,7 +2,16 @@
 
 **Does turning an LLM agent's text policy into a graph make it follow the rules more consistently?**
 
+An evaluation study of rule-following in LLM tool-calling agents: 12 agent setups, 4,560 multi-turn dialogues, two benchmarks, with paired bootstrap statistics and hand-checked failures.
+
 I test this on the airline domain of [τ-bench](https://github.com/sierra-research/tau-bench), a benchmark where an LLM customer-service agent talks to an LLM-simulated customer and calls tools (book, change, cancel flights) on a real database. As a stretch goal, I repeat the main test on the telecom domain of [τ²-bench](https://github.com/sierra-research/tau2-bench), where the user also runs tools on their own phone.
+
+## Demo (2:52)
+
+<!-- In the GitHub editor, drag policy-graph-demo-720p.mp4 onto the next line. GitHub replaces it with a video link. -->
+DRAG_VIDEO_HERE
+
+*Real dialogues replayed side by side: the same task passing once and failing the next time, the validator blocking a cancellation the policy forbids, and graph rules vs. text retrieval (RAG) on the same task.*
 
 ---
 
@@ -19,6 +28,7 @@ I wanted to answer three questions:
 - **RQ1:** If the policy is written as a **graph** (structured knowledge) instead of prose, does the agent become more consistent?
 - **RQ2:** Does it matter **how deeply** the graph is used: only in the prompt (*shallow*), checked step by step before each action (*semi-deep*), or trained into the model (*deep*)?
 - **H1:** If this Knowledge-infused Learning (KiL) really helps, it should beat a simple **runtime validator**: the same rules written as code that blocks bad tool calls. If the validator is just as good, the rules belong in code, not in the model.
+- **Ablation:** Is it the *graph* that helps semi-deep KiL, or just showing the agent some rules right before it acts? A RAG arm answers this by swapping the graph for text retrieval.
 
 ## Action
 
@@ -30,14 +40,26 @@ I wanted to answer three questions:
    - **Runtime validator:** the 24 data rules as Python code. It checks every write tool call before it reaches the database and blocks it with the name of the broken rule.
    - **Shallow KiL:** the graph rendered as a structured rule list and added to the prompt.
    - **Semi-deep KiL:** before each write call, the rules for that one action are pulled from the graph and the agent must check them one by one.
+   - **RAG (ablation of semi-deep):** same check, same prompt, same amount of text, but the rules come from vector search over the 26 bullets of `wiki.md` (`all-MiniLM-L6-v2`, query = tool name + arguments). Each bullet keeps its rule id, so I can measure how many of the graph's rules retrieval finds (recall).
 5. **Built deep KiL on an open model.** Deep KiL changes the model's weights with my own loss, which the Gemini API does not allow. So I used **Qwen3-8B** (LoRA, one A100 40 GB) as the agent and kept the same Gemini user simulator. Training data come from the 1,600 Gemini dialogues: passing, rule-following dialogues as positives, and rule-breaking write calls (found by the validator's checker) as negatives. Loss = next-token loss + 0.5 × a penalty on the violating calls. Tasks are split into 5 folds, so no adapter is tested on a task it saw in training. Four arms on the same model: `qwen_base` (no training), `qwen_sft` (fine-tuning only, no penalty), `qwen_deep` (fine-tuning + penalty = **deep KiL**), `qwen_validator` (H1 control).
 6. **Compared all arms and read failed dialogues by hand.** Violations in three types (illegal tool calls, dialogue rules, reasoning/argument errors), the τ-bench failure categories, and a hand-check of 30 failed dialogues: is the error the agent's, the simulator's, or the benchmark's?
 7. **Tested the tools, not just the agent.** I ran the validator on τ-bench's own answer keys. This is how I found that some answer keys break the written policy (see Result).
 8. **Repeated the main test on τ²-bench telecom.** 40 test tasks × 8 trials; baseline, validator (5 data rules), and shallow KiL with a new telecom policy graph (8 global rules, 12 action conditions, 3 troubleshooting procedures with 17 user-side steps). I compared the arms the same way as for airline (paired tests, results by issue type, violations replayed from the saved dialogues) and read 15 failed dialogues by hand. Semi-deep and deep KiL were not run on telecom: the budget was used up, and most fixes happen on the user's phone, where a per-action rule check does not apply.
 9. **Checked the newer answer keys.** I ran my airline validator on τ²-bench's *airline* answer keys to see if the 8 broken answer keys from τ-bench are still there.
-10. **Used AI tools in the workflow.** I used an AI coding assistant to draft code and the first version of the graph JSON. I verified the output with tests (for example, replaying every answer key through the validator) and by reading logs. One bug, a user-simulator setting that differed between arms, was caught this way and fixed before any result was used. For both hand-checks, AI first suggested a label for each dialogue; I read every dialogue and confirmed or changed the label.
+10. **Made a replay page and a demo video.** A web page replays any task, arm and try side by side, with every rule-breaking call flagged. The demo video above is recorded from it.
+11. **Used AI tools in the workflow.** I used an AI coding assistant to draft code and the first version of the graph JSON. I verified the output with tests (for example, replaying every answer key through the validator) and by reading logs. One bug, a user-simulator setting that differed between arms, was caught this way and fixed before any result was used. For both hand-checks, AI first suggested a label for each dialogue; I read every dialogue and confirmed or changed the label.
 
 ## Result
+
+### Key results
+
+- The validator (rules as code) has the best pass^k on airline. No KiL depth beats it, so **H1 is refuted**.
+- The policy graph still keeps the agent inside the policy: illegal calls fall from **70 to 2** with semi-deep KiL.
+- Swapping the graph for text retrieval (RAG) keeps pass^k about the same but lets **28** illegal calls through, because retrieval misses rules.
+- On τ²-bench telecom, shallow KiL beats the validator at pass^1 (+0.119\*), but not at pass^8.
+- 8 of τ-bench's 50 airline answer keys break its own policy; τ²-bench fixed all 8.
+
+**Takeaway:** put hard rules in code first. Use structured knowledge where code cannot see, such as dialogue rules and steps on the user's phone.
 
 ### τ-bench airline (50 tasks × 8 trials per arm)
 
@@ -47,6 +69,7 @@ I wanted to answer three questions:
 | Gemini (05G–08) | Runtime validator | **0.573** | **0.380** | 34% | 0 (69 blocked) |
 | Gemini (05G–08) | Shallow KiL | 0.520 | 0.340 | 35% | 31 |
 | Gemini (05G–08) | Semi-deep KiL | 0.520 | 0.360 | 31% | 2 |
+| Gemini (14) | RAG (ablation) | 0.497 | 0.300 | 40% | 28 |
 | Qwen3-8B (09) | Base | 0.147 | 0.020 | 86% | 349 |
 | Qwen3-8B (09) | SFT (no penalty) | 0.253 | 0.040 | 84% | 182 |
 | Qwen3-8B (09) | Deep KiL | 0.340 | 0.120 | 65% | 76 |
@@ -56,7 +79,7 @@ Each model is compared only with its own arms (the agent model differs).
 
 ![pass^k curves of all arms](figures/all_arms_passk.png)
 
-*pass^k curves with 95% bootstrap CI. Left: gemini-3.1-flash-lite arms (notebooks 05G–08). Right: Qwen3-8B arms (notebook 09). This graph is from notebook 10.*
+*pass^k curves with 95% bootstrap CI. Left: gemini-3.1-flash-lite arms (notebooks 05G–08). Right: Qwen3-8B arms (notebook 09). This graph is from notebook 10; the RAG curve is in `figures/gemini_rag_passk.png` (notebook 14).*
 
 **What I found**
 
@@ -64,6 +87,7 @@ Each model is compared only with its own arms (the agent model differs).
 - **The baseline is not consistent.** Gemini solves about half of the tasks once, but only about a third every time. 19 of 50 tasks pass in some trials and fail in others.
 - **The validator stops every checkable violation** and raises pass^1 by about 10 points on the clean tasks (+0.104, 95% CI [+0.033, +0.185]). But pass^8 barely moves (+0.048, not significant).
 - **KiL cuts violations, but not failures.** Illegal calls fall from 70 to 31 (shallow) and 2 (semi-deep) on Gemini, and from 349 to 76 on Qwen with deep KiL. But the agent becomes more cautious and leaves more required actions undone (missing actions: Gemini 110 → 151 with semi-deep; Qwen 99 → 205 with deep), so pass^k does not rise.
+- **The graph's exact rule list is what stops violations (RAG ablation, notebook 14).** RAG and semi-deep differ only in where the rules come from. pass^k is about the same (clean 42: pass^1 −0.036, pass^8 −0.071, not significant), but RAG lets 28 illegal calls through vs. 2. Retrieval is the cause: RAG finds 71% of the rules the graph gives for an action, and all of them in only 16% of checks. For cancellations it most often misses C3 ("only a trip with no flown segment can be cancelled"), and 24 of its 28 violations break C3. With fewer rules on screen the agent is also bolder (repeats the call after the check 313 times vs. 203). RAG is still below the validator (clean 42: pass^1 −0.101\*).
 - **Deep KiL works compared with plain fine-tuning.** Deep beats SFT at every k (clean 42: pass^1 +0.104, pass^8 +0.095, both significant), so the gain comes from the graph-based penalty, not only from the training data.
 - **Final-state scoring hides violations.** 13% of Gemini baseline's passing dialogues still break a rule (20% for Qwen base).
 - **Hand-check of 30 failed dialogues:** the agent caused 20, the simulator 5, the benchmark 4, unclear 1.
@@ -101,6 +125,20 @@ Each model is compared only with its own arms (the agent model differs).
 - **Final-state scoring hides violations.** 46 of the baseline's 100 passing dialogues resume a line whose contract has ended, which `main_policy.md` forbids ("not allowed … even if the user has paid"), and still get full reward (shallow: 36 of 139; validator: 0).
 - **Hand-check of 15 failed dialogues (5 per arm):** the agent caused all 15. The common pattern: the agent calls tools that only exist on the user's phone (e.g. `toggle_airplane_mode`), gets "not found", and transfers to a human instead of telling the user what to do (13 of 15 end in a transfer).
 
+## Skills shown
+
+| Area | What it shows |
+|---|---|
+| **LLM agents** | Tool-calling agents on τ-bench / τ²-bench with Gemini and Qwen3-8B; a pre-execution guardrail that blocks policy-breaking tool calls and tells the agent why |
+| **Knowledge graphs** | A policy graph built from a prose policy (7 actions, 29 rules, every rule traced to its source line), loaded into Neo4j and used at three depths |
+| **Fine-tuning** | LoRA on Qwen3-8B (A100) with a custom loss: next-token loss + a penalty on rule-breaking tool calls; 5-fold task split so no adapter sees its test tasks |
+| **RAG** | Dense retrieval over the policy text (MiniLM embeddings) as a controlled ablation, with rule-level recall |
+| **Evaluation** | pass^k for k = 1..8, paired bootstrap CIs, violation replay on a fresh database copy, failure taxonomy, 45 dialogues read by hand |
+| **Finding benchmark bugs** | Used the validator to show 8 of 50 τ-bench answer keys break the benchmark's own policy |
+| **Engineering** | Reproducible Colab notebooks, pinned benchmark commit, fixed seeds where possible, API keys only from secrets, API cost tracked per arm |
+
+**Stack:** Python, LiteLLM, Gemini API, Hugging Face Transformers + PEFT (LoRA), sentence-transformers, Neo4j, pandas, matplotlib, Playwright, Google Colab.
+
 ---
 
 ## Repository layout
@@ -123,6 +161,7 @@ notebooks/
   11_Tau2_Telecom_Setup.ipynb        tau2-bench install and 5-task pilot
   12_Tau2_Telecom_Arms.ipynb         telecom baseline, validator, shallow KiL
   13_Tau2_Telecom_Compare.ipynb      telecom comparison, hand-check, tau2 airline answer-key check
+  14_Gemini_RAG.ipynb                RAG arm (ablation of semi-deep) and retrieval recall
 
 airline_policy_graph.json            the airline policy graph (master copy)
 settings_gemini.py                   settings shared by every Gemini arm
@@ -130,7 +169,8 @@ gemini_run.py                        runs tau-bench with Gemini and logs every c
 policy_checker.py                    the 24 data rules as code
 validator_gemini.py                  the runtime validator arm
 violations.py                        counts violations in saved dialogues
-graph_text.py, kil_run.py            shallow / semi-deep arms
+graph_text.py, kil_run.py            shallow / semi-deep / RAG arms (KIL_MODE)
+rag_text.py                          RAG retriever over the wiki.md bullets
 deep_data.py, deep_train.py,
 deep_run.py, settings_deep.py        deep KiL: training data, LoRA training, evaluation
 compare.py, passk.py                 comparison of all arms, pass^k and bootstrap CI
@@ -166,9 +206,10 @@ All notebooks run on Google Colab. The project folder **is a clone of tau-bench 
 The notebooks expect this exact path: `/content/drive/MyDrive/cmsc691-10-project2`.
 
 **2. Free checks (no API cost, CPU only):**
-- `10_Compare_All_Arms.ipynb`: reads the saved results of all 8 airline arms and recomputes pass^k, confidence intervals, paired tests, violation types, and the hand-check tables.
+- `10_Compare_All_Arms.ipynb`: reads the saved results of the 8 main airline arms and recomputes pass^k, confidence intervals, paired tests, violation types, and the hand-check tables.
 - `06G_Gemini_Validator.ipynb`, answer-key test (the cell "test the checker on tau-bench's answer key"): replays τ-bench's answer keys through the validator. Run the cells above it first; cell 3 makes one Gemini test call, so it needs `GEMINI_API_KEY`, but the cost is close to zero.
 - `04_Policy_Graph.ipynb`: the last cells draw the full graph from the JSON without Neo4j.
+- `14_Gemini_RAG.ipynb`, cells 9–13: recompute the RAG arm's pass^k, paired tests, violations and retrieval recall from the saved results (run cells 1–6 first: cell 3 makes one Gemini test call, cell 6 downloads the free MiniLM model).
 - `13_Tau2_Telecom_Compare.ipynb`: recomputes all telecom statistics from the saved dialogues and runs the τ²-bench airline answer-key check (see step 4 for where the files go).
 
 **3. Re-running an arm** (costs money or GPU time):
@@ -176,6 +217,7 @@ The notebooks expect this exact path: `/content/drive/MyDrive/cmsc691-10-project
 | Notebooks | Runtime | Needs | Cost per arm |
 |---|---|---|---|
 | 05G, 06G, 07, 08 | CPU | Colab Secret `GEMINI_API_KEY` | about $6–8 |
+| 14 (RAG) | CPU | `GEMINI_API_KEY` | about $22 (token estimate), about 4 hours |
 | 09 (deep KiL) | GPU ≥ 40 GB (A100) | `GEMINI_API_KEY` for the user simulator | about 7 GPU hours + $4 for all 4 arms |
 | 04 (Neo4j part) | CPU | Neo4j Aura login in Colab Secrets | free |
 | 11, 12 (telecom) | CPU | `GEMINI_API_KEY` | about $16–20 |
