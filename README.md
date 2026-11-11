@@ -228,3 +228,17 @@ The notebooks expect this exact path: `/content/drive/MyDrive/cmsc691-10-project
 | 11, 12 (telecom) | CPU | `GEMINI_API_KEY` | about $16–20 |
 
 **4. Telecom:** open `11_Tau2_Telecom_Setup.ipynb` and then `12_Tau2_Telecom_Arms.ipynb` in Colab. They create `/content/drive/MyDrive/cmsc691-10-tau2`, clone τ²-bench at commit `da0835f`, and write all their own code files. The saved results are in `tau2_telecom/results/`. To analyze them without re-running, run the install cells of 11, copy each result to `tau2-bench/data/simulations/telecom_<arm>/results.json`, copy `tau2_telecom/*.py` into `cmsc691-10-tau2/`, and run `13_Tau2_Telecom_Compare.ipynb` (free, CPU, about 2–3 minutes). Its last part also needs the airline project folder from step 1.
+
+## References
+
+1. Yao, S., Shinn, N., Razavi, P., and Narasimhan, K. (2024). τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains. [arXiv:2406.12045](https://arxiv.org/abs/2406.12045)
+2. Barres, V., Dong, H., Ray, S., Si, X., and Narasimhan, K. (2025). τ²-bench: Evaluating Conversational Agents in a Dual-Control Environment. [arXiv:2506.07982](https://arxiv.org/abs/2506.07982)
+3. Gaur, M. and Sheth, A. P. (2026). *Knowledge-Infused Learning: Neurosymbolic AI for Explainability, Interpretability, and Safety.* Cambridge University Press.
+4. Sheth, A., Roy, K., and Gaur, M. (2023). Neurosymbolic AI: Why, What, and How. [arXiv:2305.00813](https://arxiv.org/abs/2305.00813)
+5. Roy, K., Gaur, M., Soltani, M., Rawte, V., Kalyan, A., and Sheth, A. (2023). ProKnow: Process Knowledge for Safety Constrained and Explainable Question Generation for Mental Health Diagnostic Assistance. *Frontiers in Big Data*, 5. [doi:10.3389/fdata.2022.1056728](https://doi.org/10.3389/fdata.2022.1056728)
+6. Saxena, Y. and Gaur, M. (2026). Neurosymbolic Retrievers for Retrieval-augmented Generation. [arXiv:2601.04568](https://arxiv.org/abs/2601.04568)
+7. Hu, E. J., Shen, Y., Wallis, P., Allen-Zhu, Z., Li, Y., Wang, S., Wang, L., and Chen, W. (2021). LoRA: Low-Rank Adaptation of Large Language Models. [arXiv:2106.09685](https://arxiv.org/abs/2106.09685)
+8. Qwen Team (2025). Qwen3 Technical Report. [arXiv:2505.09388](https://arxiv.org/abs/2505.09388)
+9. Reimers, N. and Gurevych, I. (2019). Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks. [arXiv:1908.10084](https://arxiv.org/abs/1908.10084) (the `all-MiniLM-L6-v2` model used by the RAG arm)
+
+τ-bench and τ²-bench code: MIT License, © Sierra. `run.py` and `setup.py` in this repo come from τ-bench.
