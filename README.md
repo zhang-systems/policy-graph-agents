@@ -6,16 +6,17 @@ An evaluation study of rule-following in LLM tool-calling agents: 12 agent setup
 
 I test this on the airline domain of [τ-bench](https://github.com/sierra-research/tau-bench), a benchmark where an LLM customer-service agent talks to an LLM-simulated customer and calls tools (book, change, cancel flights) on a real database. As a stretch goal, I repeat the main test on the telecom domain of [τ²-bench](https://github.com/sierra-research/tau2-bench), where the user also runs tools on their own phone.
 
-## Demo (2:52)
-
-<!-- In the GitHub editor, drag policy-graph-demo-720p.mp4 onto the next line. GitHub replaces it with a video link. -->
+## Demo (2:48)
 
 https://github.com/user-attachments/assets/369d70c0-2beb-4179-b856-d330fdca0154
 
-
-
-
 *Real dialogues replayed side by side: the same task passing once and failing the next time, the validator blocking a cancellation the policy forbids, and graph rules vs. text retrieval (RAG) on the same task.*
+
+## Poster
+
+[![Poster: policy graph agents](figures/poster.png)](figures/poster.pdf)
+
+*One-page summary. Click for the PDF.*
 
 ---
 
@@ -189,7 +190,7 @@ results_baseline/, results_validator/,
 results_pilot/, results_vllm/        early Qwen phase
 results_validator_BUG_user_thinking/ the run with the simulator bug (kept as a record)
 results_compare/                     tables from notebook 10; handcheck/ = 30 read dialogues
-figures/                             plots used in this README and the report
+figures/                             plots, poster (poster.pdf / poster.png) used in this README
 tau2_telecom/                        telecom code, policy graph, and results of the 3 arms
 tau2_telecom/results_compare/        tables from notebook 13; handcheck/ = 15 read dialogues
 ```
