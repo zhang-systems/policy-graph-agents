@@ -1,0 +1,5 @@
+method,recall,all rules found,precision,rules returned
+Vector RAG (14),71%,16%,62%,4.6
+NeSy (vector + graph),96%,89%,93%,4.5
+NeSy loose,100%,99%,41%,11.4
+Graph by tool (semi-deep),100%,100%,100%,4.2
