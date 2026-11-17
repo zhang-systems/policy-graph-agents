@@ -16,7 +16,7 @@ https://github.com/user-attachments/assets/369d70c0-2beb-4179-b856-d330fdca0154
 
 [![Poster: policy graph agents](figures/poster.png)](figures/poster.pdf)
 
-*One-page summary. Click for the PDF.*
+*One-page summary of the whole project, including the RAG and NeSy retrieval results. Click for the PDF.*
 
 ---
 
@@ -33,7 +33,7 @@ I wanted to answer three questions:
 - **RQ1:** If the policy is written as a **graph** (structured knowledge) instead of prose, does the agent become more consistent?
 - **RQ2:** Does it matter **how deeply** the graph is used: only in the prompt (*shallow*), checked step by step before each action (*semi-deep*), or trained into the model (*deep*)?
 - **H1:** If this Knowledge-infused Learning (KiL) really helps, it should beat a simple **runtime validator**: the same rules written as code that blocks bad tool calls. If the validator is just as good, the rules belong in code, not in the model.
-- **Ablation:** Is it the *graph* that helps semi-deep KiL, or just showing the agent some rules right before it acts? A RAG arm answers this by swapping the graph for text retrieval.
+- **Ablation:** Is it the *graph* that helps semi-deep KiL, or just showing the agent some rules right before it acts? A RAG arm answers this by swapping the graph for text retrieval, and an offline neurosymbolic (NeSy) retriever tests whether the graph can fill in what vector search misses.
 
 ## Action
 
@@ -46,6 +46,7 @@ I wanted to answer three questions:
    - **Shallow KiL:** the graph rendered as a structured rule list and added to the prompt.
    - **Semi-deep KiL:** before each write call, the rules for that one action are pulled from the graph and the agent must check them one by one.
    - **RAG (ablation of semi-deep):** same check, same prompt, same amount of text, but the rules come from vector search over the 26 bullets of `wiki.md` (`all-MiniLM-L6-v2`, query = tool name + arguments). Each bullet keeps its rule id, so I can measure how many of the graph's rules retrieval finds (recall).
+   - **NeSy retrieval (offline, notebook 15):** the RAG arm's logged vector hits are the seeds; the graph scores each action by its seed rules, keeps the best one, and returns that action's rules. The tool name is never used. No new agent runs, $0.
 5. **Built deep KiL on an open model.** Deep KiL changes the model's weights with my own loss, which the Gemini API does not allow. So I used **Qwen3-8B** (LoRA, one A100 40 GB) as the agent and kept the same Gemini user simulator. Training data come from the 1,600 Gemini dialogues: passing, rule-following dialogues as positives, and rule-breaking write calls (found by the validator's checker) as negatives. Loss = next-token loss + 0.5 × a penalty on the violating calls. Tasks are split into 5 folds, so no adapter is tested on a task it saw in training. Four arms on the same model: `qwen_base` (no training), `qwen_sft` (fine-tuning only, no penalty), `qwen_deep` (fine-tuning + penalty = **deep KiL**), `qwen_validator` (H1 control).
 6. **Compared all arms and read failed dialogues by hand.** Violations in three types (illegal tool calls, dialogue rules, reasoning/argument errors), the τ-bench failure categories, and a hand-check of 30 failed dialogues: is the error the agent's, the simulator's, or the benchmark's?
 7. **Tested the tools, not just the agent.** I ran the validator on τ-bench's own answer keys. This is how I found that some answer keys break the written policy (see Result).
@@ -61,6 +62,7 @@ I wanted to answer three questions:
 - The validator (rules as code) has the best pass^k on airline. No KiL depth beats it, so **H1 is refuted**.
 - The policy graph still keeps the agent inside the policy: illegal calls fall from **70 to 2** with semi-deep KiL.
 - Swapping the graph for text retrieval (RAG) keeps pass^k about the same but lets **28** illegal calls through, because retrieval misses rules.
+- A neurosymbolic retriever (vector seeds + graph) raises rule recall from **71% to 96%** and finds C3 in every cancellation check (offline, no agent run).
 - On τ²-bench telecom, shallow KiL beats the validator at pass^1 (+0.119\*), but not at pass^8.
 - 8 of τ-bench's 50 airline answer keys break its own policy; τ²-bench fixed all 8.
 
@@ -93,6 +95,9 @@ Each model is compared only with its own arms (the agent model differs).
 - **The validator stops every checkable violation** and raises pass^1 by about 10 points on the clean tasks (+0.104, 95% CI [+0.033, +0.185]). But pass^8 barely moves (+0.048, not significant).
 - **KiL cuts violations, but not failures.** Illegal calls fall from 70 to 31 (shallow) and 2 (semi-deep) on Gemini, and from 349 to 76 on Qwen with deep KiL. But the agent becomes more cautious and leaves more required actions undone (missing actions: Gemini 110 → 151 with semi-deep; Qwen 99 → 205 with deep), so pass^k does not rise.
 - **The graph's exact rule list is what stops violations (RAG ablation, notebook 14).** RAG and semi-deep differ only in where the rules come from. pass^k is about the same (clean 42: pass^1 −0.036, pass^8 −0.071, not significant), but RAG lets 28 illegal calls through vs. 2. Retrieval is the cause: RAG finds 71% of the rules the graph gives for an action, and all of them in only 16% of checks. For cancellations it most often misses C3 ("only a trip with no flown segment can be cancelled"), and 24 of its 28 violations break C3. With fewer rules on screen the agent is also bolder (repeats the call after the check 313 times vs. 203). RAG is still below the validator (clean 42: pass^1 −0.101\*).
+- **The graph can repair vector retrieval (NeSy, notebook 15, offline).** Starting from the same 440 vector hits, letting the graph pick the action and add its rules raises recall from 71% to 96%, checks with all rules from 16% to 89%, and precision from 62% to 93%, with about the same number of rules. C3 is found in 173 of 173 cancellation checks (vector: 62). It fails on baggage and passenger changes, where the seeds point to the flight-change rule and the graph picks the wrong action. This measures retrieval only; an agent run with NeSy is future work.
+
+![rule recall: vector, NeSy, graph](figures/nesy_recall.png)
 - **Deep KiL works compared with plain fine-tuning.** Deep beats SFT at every k (clean 42: pass^1 +0.104, pass^8 +0.095, both significant), so the gain comes from the graph-based penalty, not only from the training data.
 - **Final-state scoring hides violations.** 13% of Gemini baseline's passing dialogues still break a rule (20% for Qwen base).
 - **Hand-check of 30 failed dialogues:** the agent caused 20, the simulator 5, the benchmark 4, unclear 1.
@@ -137,7 +142,7 @@ Each model is compared only with its own arms (the agent model differs).
 | **LLM agents** | Tool-calling agents on τ-bench / τ²-bench with Gemini and Qwen3-8B; a pre-execution guardrail that blocks policy-breaking tool calls and tells the agent why |
 | **Knowledge graphs** | A policy graph built from a prose policy (7 actions, 29 rules, every rule traced to its source line), loaded into Neo4j and used at three depths |
 | **Fine-tuning** | LoRA on Qwen3-8B (A100) with a custom loss: next-token loss + a penalty on rule-breaking tool calls; 5-fold task split so no adapter sees its test tasks |
-| **RAG** | Dense retrieval over the policy text (MiniLM embeddings) as a controlled ablation, with rule-level recall |
+| **RAG / NeSy retrieval** | Dense retrieval over the policy text (MiniLM embeddings) as a controlled ablation, with rule-level recall; a neurosymbolic retriever that expands vector hits on the graph (recall 71% → 96%) |
 | **Evaluation** | pass^k for k = 1..8, paired bootstrap CIs, violation replay on a fresh database copy, failure taxonomy, 45 dialogues read by hand |
 | **Finding benchmark bugs** | Used the validator to show 8 of 50 τ-bench answer keys break the benchmark's own policy |
 | **Engineering** | Reproducible Colab notebooks, pinned benchmark commit, fixed seeds where possible, API keys only from secrets, API cost tracked per arm |
@@ -167,6 +172,7 @@ notebooks/
   12_Tau2_Telecom_Arms.ipynb         telecom baseline, validator, shallow KiL
   13_Tau2_Telecom_Compare.ipynb      telecom comparison, hand-check, tau2 airline answer-key check
   14_Gemini_RAG.ipynb                RAG arm (ablation of semi-deep) and retrieval recall
+  15_NeSy_Retrieval.ipynb            NeSy retrieval on the RAG logs (offline, $0)
 
 airline_policy_graph.json            the airline policy graph (master copy)
 settings_gemini.py                   settings shared by every Gemini arm
@@ -176,6 +182,7 @@ validator_gemini.py                  the runtime validator arm
 violations.py                        counts violations in saved dialogues
 graph_text.py, kil_run.py            shallow / semi-deep / RAG arms (KIL_MODE)
 rag_text.py                          RAG retriever over the wiki.md bullets
+nesy.py                              NeSy retriever: vector seeds + graph expansion
 deep_data.py, deep_train.py,
 deep_run.py, settings_deep.py        deep KiL: training data, LoRA training, evaluation
 compare.py, passk.py                 comparison of all arms, pass^k and bootstrap CI
@@ -190,6 +197,7 @@ results_baseline/, results_validator/,
 results_pilot/, results_vllm/        early Qwen phase
 results_validator_BUG_user_thinking/ the run with the simulator bug (kept as a record)
 results_compare/                     tables from notebook 10; handcheck/ = 30 read dialogues
+results_nesy_retrieval.csv           NeSy table from notebook 15
 figures/                             plots, poster (poster.pdf / poster.png) used in this README
 tau2_telecom/                        telecom code, policy graph, and results of the 3 arms
 tau2_telecom/results_compare/        tables from notebook 13; handcheck/ = 15 read dialogues
@@ -215,6 +223,7 @@ The notebooks expect this exact path: `/content/drive/MyDrive/cmsc691-10-project
 - `06G_Gemini_Validator.ipynb`, answer-key test (the cell "test the checker on tau-bench's answer key"): replays τ-bench's answer keys through the validator. Run the cells above it first; cell 3 makes one Gemini test call, so it needs `GEMINI_API_KEY`, but the cost is close to zero.
 - `04_Policy_Graph.ipynb`: the last cells draw the full graph from the JSON without Neo4j.
 - `14_Gemini_RAG.ipynb`, cells 9–13: recompute the RAG arm's pass^k, paired tests, violations and retrieval recall from the saved results (run cells 1–6 first: cell 3 makes one Gemini test call, cell 6 downloads the free MiniLM model).
+- `15_NeSy_Retrieval.ipynb`: the NeSy retrieval comparison from the RAG logs (about 1 minute, no API key).
 - `13_Tau2_Telecom_Compare.ipynb`: recomputes all telecom statistics from the saved dialogues and runs the τ²-bench airline answer-key check (see step 4 for where the files go).
 
 **3. Re-running an arm** (costs money or GPU time):
