@@ -1,0 +1,12 @@
+{
+  "agent": "Qwen/Qwen3-8B",
+  "user": "gemini-3.1-flash-lite",
+  "arm": "validator",
+  "validator": true,
+  "agent_temperature": 0.0,
+  "user_temperature": "not set in settings_*.py (check deep_run.py)",
+  "gpu": "NVIDIA L4",
+  "max_model_len": 24576,
+  "max_num_seqs": 8,
+  "vllm": "0.34.0"
+}
