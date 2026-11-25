@@ -2,7 +2,7 @@
 
 **Does turning an LLM agent's text policy into a graph make it follow the rules more consistently?**
 
-An evaluation study of rule-following in LLM tool-calling agents on τ-bench airline, with paired bootstrap statistics and hand-checked failures. So far: 9 agent setups and 3,360 multi-turn dialogues.
+An evaluation study of rule-following in LLM tool-calling agents on τ-bench airline, with paired bootstrap statistics and hand-checked failures. So far: 10 agent setups and 3,760 multi-turn dialogues.
 
 I test this on the airline domain of [τ-bench](https://github.com/sierra-research/tau-bench). An LLM customer-service agent talks to an LLM-simulated customer and calls tools (book, change, cancel flights) on a real database. As a stretch goal, I repeat the main test on the telecom domain of τ²-bench, where the user also runs tools on their own phone.
 
@@ -16,8 +16,8 @@ The project has two parts:
 | System | Notebook | Status | pass^1 | pass^8 |
 |---|---|---|---|---|
 | Baseline (prose policy) | 05Q | ✅ done | 0.150 | 0.000 |
-| Runtime validator | 06Q | ⏳ built, not run | | |
-| Shallow KiL | 07Q | ⏳ built, not run | | |
+| Runtime validator | 06Q | ✅ done | 0.380 | 0.200 |
+| Shallow KiL | 07Q | 🛠 being rebuilt | | |
 | Semi-deep KiL | 08Q | 🛠 being built | | |
 | Deep KiL | 09Q | 🛠 being built | | |
 | Comparison | 10Q | 🛠 being built | | |
@@ -70,18 +70,31 @@ All five start from the same policy graph (`airline_policy_graph.json`, see Part
 
 Semi-deep KiL differs from the validator in one way: it shapes the plan **before** the call instead of blocking the call afterward. So it can also catch dialogue-level mistakes, such as acting without first explaining the change and getting a yes. If a rule does not hold, the agent tells the customer which one.
 
-### Results so far: baseline (05Q)
+### Results so far: baseline (05Q) and validator (06Q)
 
-| | pass^1 (95% CI) | pass^8 | drop 1→8 | illegal calls run | write without a yes | passing dialogues with a violation |
-|---|---|---|---|---|---|---|
-| Qwen3-8B baseline | 0.150 [0.09, 0.22] | 0.000 | 100% | 339 | 342 of 571 | 5 of 60 |
+| System | pass^1 (95% CI) | pass^8 | drop 1→8 | blocked calls | illegal calls run | write without a yes | passing dialogues with a violation |
+|---|---|---|---|---|---|---|---|
+| Baseline | 0.150 [0.09, 0.22] | 0.000 | 100% | 0 | 339 | 342 of 571 | 5 of 60 |
+| Runtime validator | 0.380 [0.27, 0.49] | 0.200 | 47% | 347 | 0 | 215 of 422 | 0 of 152 |
 
-![Qwen3-8B baseline pass^k](figures/results_qwen_base_passk.png)
+"Write without a yes" counts bookings and changes that ran although the user's last message had no yes, confirm or go ahead.
 
-- No task passes in all 8 tries. 18 of 50 tasks pass sometimes; 32 never pass.
-- Illegal calls happen most late in the dialogue (early / middle / late: 86 / 90 / 163).
-- 229 write calls were rejected by the database because of wrong arguments.
-- A first run with an older vLLM gave the same picture (pass^1 0.147, 338 illegal calls). I reran it so every Qwen system uses the same vLLM.
+![Qwen3-8B validator vs baseline, pass^k](figures/results_qwen_validator_passk.png)
+
+Validator − baseline, paired over the same tasks (95% bootstrap CI, * = significant; notebook 06Q):
+
+| Tasks | Δpass^1 | Δpass^2 | Δpass^4 | Δpass^8 |
+|---|---|---|---|---|
+| all 50 | +0.230 [+0.133, +0.335] * | +0.225 [+0.129, +0.330] * | +0.217 [+0.117, +0.325] * | +0.200 [+0.100, +0.320] * |
+| clean 42 | +0.274 [+0.164, +0.393] * | +0.268 [+0.156, +0.389] * | +0.258 [+0.144, +0.384] * | +0.238 [+0.119, +0.381] * |
+
+**What I found so far (Qwen3-8B)**
+
+- **The baseline is not consistent at all.** No task passes in all 8 tries; 18 of 50 pass sometimes and 32 never pass. Illegal calls happen most late in the dialogue (early / middle / late: 86 / 90 / 163).
+- **The validator lifts the whole curve.** pass^1 more than doubles (0.150 → 0.380), and pass^8 rises from 0 to 0.200: 10 tasks now pass every time. The drop from k = 1 to 8 falls from 100% to 47%. Every difference is significant, on all 50 tasks and on the 42 clean ones. On Gemini (Part 1) the validator raised pass^1 only. One reason: Qwen breaks rules much more often (339 illegal calls vs. Gemini's 70), and each blocked call tells the agent which rule it broke, so it can fix the call and try again.
+- **It stops every rule break it can check.** 347 calls were blocked, none ran, and no passing dialogue has a violation.
+- **It cannot see the dialogue.** About half of the bookings and changes that ran (215 of 422) happened without an explicit yes from the user. A validator on tool calls cannot catch this. This is the gap semi-deep KiL is meant to close, and the line every KiL depth now has to beat.
+- **Runs.** A first baseline run with an older vLLM gave the same picture (pass^1 0.147, 338 illegal calls); I reran it so every Qwen system uses the same vLLM. In the validator run, one of 400 dialogues first hit the 24k context limit (blocked calls make dialogues longer); it was rerun once and finished.
 
 ## Part 1: earlier study with Gemini (done)
 
@@ -106,7 +119,7 @@ The notebooks of Part 1's Gemini arms and the old Qwen deep-KiL notebook (05G–
 - On τ²-bench telecom, shallow KiL beats the validator at pass^1 (+0.119*), but not at pass^8.
 - 8 of τ-bench's 50 airline answer keys break its own policy; τ²-bench fixed all 8.
 
-**Takeaway so far:** put hard rules in code first. Use structured knowledge where code cannot see, such as dialogue rules and steps on the user's phone. Part 2 tests whether this holds when all depths use one open model.
+**Takeaway so far:** put hard rules in code first. Use structured knowledge where code cannot see, such as dialogue rules and steps on the user's phone. Part 2 tests whether this holds when all depths use one open model; so far the validator is an even stronger line on Qwen than on Gemini.
 
 ### τ-bench airline, Gemini (50 tasks × 8 trials per arm)
 
@@ -189,7 +202,8 @@ notebooks/
   03_TauBench_Qwen32B_Pilot.ipynb    pilot with Qwen3-32B (early phase)
   04_Policy_Graph.ipynb              build the graph, load it into Neo4j, draw it
   05Q_Qwen_Baseline.ipynb            Part 2: baseline
-  06Q-10Q                            Part 2: validator, shallow, semi-deep, deep, comparison (coming)
+  06Q_Qwen_Validator.ipynb           Part 2: runtime validator, paired comparison with 05Q
+  07Q-10Q                            Part 2: shallow, semi-deep, deep, comparison (coming)
   11_Tau2_Telecom_Setup.ipynb        tau2-bench install and 5-task pilot
   12_Tau2_Telecom_Arms.ipynb         telecom baseline, validator, shallow KiL
   13_Tau2_Telecom_Compare.ipynb      telecom comparison, hand-check, tau2 airline answer-key check
@@ -212,8 +226,8 @@ load_neo4j.py, graph_draw.py         Neo4j import and graph pictures
 settings.py, pilot_*.py, ...         early Qwen phase (01-03)
 run.py, setup.py                     from tau-bench itself (MIT, Copyright Sierra)
 
-results_qwen_base/trial_1..8/        Part 2 baseline dialogues
-results_qwen_base_*.json / .csv      its config, vLLM version, pass^k, violations, consistency
+results_qwen_<arm>/trial_1..8/       Part 2 dialogues of each Qwen system (validator: also blocks.jsonl)
+results_qwen_<arm>_*.json / .csv     config, vLLM version, pass^k, violations, consistency (validator: also _vs_base.csv)
 results_gemini_<arm>/trial_1..8/     Part 1 dialogues of each Gemini arm
 results_gemini_<arm>_passk.csv       pass^k table (also _config.json, _violations.csv)
 results_pilot/, results_vllm/        early Qwen phase
@@ -240,6 +254,7 @@ The notebooks expect this exact path: `/content/drive/MyDrive/cmsc691-10-project
 **2. Free checks** (no GPU, no agent runs):
 
 - `05Q_Qwen_Baseline.ipynb`, cells 1, 2, 3, 8, 11, 12: recompute the Qwen baseline's pass^k, violations and consistency from the saved dialogues. Cell 3 needs `GEMINI_API_KEY` in Colab Secrets but makes no call.
+- `06Q_Qwen_Validator.ipynb`, cells 1, 2, 3, 8–12: the same for the validator, plus the paired comparison with the baseline.
 - `04_Policy_Graph.ipynb`: the last cells draw the full graph from the JSON without Neo4j.
 - `14_Gemini_RAG.ipynb`, cells 9–13: recompute the RAG arm's pass^k, paired tests, violations and retrieval recall (run cells 1–6 first: cell 3 makes one Gemini test call, cell 6 downloads the free MiniLM model).
 - `15_NeSy_Retrieval.ipynb`: the NeSy retrieval comparison from the RAG logs (about 1 minute, no API key).
@@ -249,7 +264,7 @@ The notebooks expect this exact path: `/content/drive/MyDrive/cmsc691-10-project
 
 | Notebooks | Runtime | Needs | Cost |
 |---|---|---|---|
-| 05Q (and 06Q–08Q) | GPU, L4 or larger | `GEMINI_API_KEY` for the user simulator | about 2.6 h on an L4 + about $1 per system |
+| 05Q, 06Q (and 07Q–08Q) | GPU, L4 or larger | `GEMINI_API_KEY` for the user simulator | about 2.6–3 h on an L4 + about $1–1.5 per system |
 | 14 (RAG) | CPU | `GEMINI_API_KEY` | about $22, about 4 hours |
 | 04 (Neo4j part) | CPU | Neo4j Aura login in Colab Secrets | free |
 | 11, 12 (telecom) | CPU | `GEMINI_API_KEY` | about $16–20 per arm |
