@@ -1,0 +1,11 @@
+{
+  "illegal": 339,
+  "g1_calls": 571,
+  "g1_miss": 342,
+  "arg_err": 229,
+  "early": 86,
+  "middle": 90,
+  "late": 163,
+  "passed dialogues": 60,
+  "passed with \u22651 illegal": 5
+}
