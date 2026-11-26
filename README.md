@@ -2,7 +2,7 @@
 
 **Does turning an LLM agent's text policy into a graph make it follow the rules more consistently?**
 
-An evaluation study of rule-following in LLM tool-calling agents on τ-bench airline, with paired bootstrap statistics and hand-checked failures. So far: 11 agent setups and 4,160 multi-turn dialogues.
+An evaluation study of rule-following in LLM tool-calling agents on τ-bench airline, with paired bootstrap statistics and hand-checked failures. So far: 12 agent setups and 4,560 multi-turn dialogues.
 
 I test this on the airline domain of [τ-bench](https://github.com/sierra-research/tau-bench). An LLM customer-service agent talks to an LLM-simulated customer and calls tools (book, change, cancel flights) on a real database. As a stretch goal, I repeat the main test on the telecom domain of τ²-bench, where the user also runs tools on their own phone.
 
@@ -15,8 +15,8 @@ The project has two parts:
 
 | System | Notebook | Status | pass^1 | pass^8 |
 |---|---|---|---|---|
-| Baseline (prose policy) | 05Q | ✅ done | 0.150 | 0.000 |
-| Runtime validator | 06Q | ✅ done | 0.380 | 0.200 |
+| Baseline (prose policy) | 05Q | ✅ done (seeded rerun) | 0.147 | 0.000 |
+| Runtime validator | 06Q | 🔄 seeded rerun next (no-seed run shown) | 0.380 | 0.200 |
 | Shallow KiL | 07Q | ✅ done | 0.140 | 0.020 |
 | Semi-deep KiL | 08Q | 🛠 being built | | |
 | Deep KiL | 09Q | 🛠 being built | | |
@@ -55,7 +55,7 @@ The policy is already in the agent's prompt, but the agent does not follow it ev
 - **Runs:** 50 tasks × 8 trials = 400 dialogues per system, concurrency 4.
 - **Hardware:** one L4 (24 GB) on Colab. The context is 24k instead of 32k and `--max-num-seqs` is 8; both are saved with each run.
 - **Statistics:** pass^k for k = 1..8 with 95% bootstrap CIs; paired comparisons over the same tasks.
-- **Simulator seeds:** from 07Q on, trial t gives seed t to every user-simulator call (`qwen_run.py`), so the 8 trials use 8 different seeds and every system uses the same 8. Gemini accepts the seed and repeats a reply for the same seed. 05Q and 06Q ran before this; I will rerun them with seeds.
+- **Simulator seeds:** from 07Q on, trial t gives seed t to every user-simulator call (`qwen_run.py`), so the 8 trials use 8 different seeds and every system uses the same 8. Gemini accepts the seed and repeats a reply for the same seed. 05Q is rerun with seeds (the first, unseeded run is kept as `results_qwen_base_noseed` for a seed check); 06Q is next.
 
 ### The five systems
 
@@ -71,26 +71,29 @@ All five start from the same policy graph (`airline_policy_graph.json`, see Part
 
 Semi-deep KiL differs from the validator in one way: it shapes the plan **before** the call instead of blocking the call afterward. So it can also catch dialogue-level mistakes, such as acting without first explaining the change and getting a yes. If a rule does not hold, the agent tells the customer which one.
 
-### Results so far: baseline (05Q), validator (06Q), shallow KiL (07Q)
+### Results so far: baseline (05Q, seeded), validator (06Q), shallow KiL (07Q, seeded)
 
 | System | pass^1 (95% CI) | pass^8 | drop 1→8 | blocked calls | illegal calls run | write without a yes | passing dialogues with a violation |
 |---|---|---|---|---|---|---|---|
-| Baseline | 0.150 [0.09, 0.22] | 0.000 | 100% | 0 | 339 | 342 of 571 | 5 of 60 |
-| Runtime validator | 0.380 [0.27, 0.49] | 0.200 | 47% | 347 | 0 | 215 of 422 | 0 of 152 |
+| Baseline (seeded) | 0.147 [0.08, 0.22] | 0.000 | 100% | 0 | 363 | 359 of 598 | 3 of 59 |
+| Baseline (no seed) | 0.150 [0.09, 0.22] | 0.000 | 100% | 0 | 339 | 342 of 571 | 5 of 60 |
+| Runtime validator (no seed) | 0.380 [0.27, 0.49] | 0.200 | 47% | 347 | 0 | 215 of 422 | 0 of 152 |
 | Shallow KiL | 0.140 [0.08, 0.20] | 0.020 | 86% | 0 | 462 | 396 of 654 | 8 of 56 |
 
-"Write without a yes" counts bookings and changes that ran although the user's last message had no yes, confirm or go ahead.
+"Write without a yes" counts bookings and changes that ran although the user's last message had no yes, confirm or go ahead. The validator row is still the unseeded run; it will be replaced by its seeded rerun.
+
+**Seed check (notebook 05Q):** the seeded baseline is the same as the unseeded one. Seeded − unseeded, paired over the same tasks: Δpass^1 = −0.003 [−0.048, +0.045], not significant at any k (also on the clean 42). Both runs have 0 / 18 / 32 tasks that always / sometimes / never pass. So adding seeds did not change the baseline.
 
 ![Qwen3-8B shallow KiL, validator and baseline, pass^k](figures/results_qwen_shallow_passk.png)
 
-Validator − baseline, paired over the same tasks (95% bootstrap CI, * = significant; notebook 06Q):
+Validator − baseline, paired over the same tasks (95% bootstrap CI, * = significant; notebook 06Q; both unseeded, to be recomputed after the seeded 06Q):
 
 | Tasks | Δpass^1 | Δpass^2 | Δpass^4 | Δpass^8 |
 |---|---|---|---|---|
 | all 50 | +0.230 [+0.133, +0.335] * | +0.225 [+0.129, +0.330] * | +0.217 [+0.117, +0.325] * | +0.200 [+0.100, +0.320] * |
 | clean 42 | +0.274 [+0.164, +0.393] * | +0.268 [+0.156, +0.389] * | +0.258 [+0.144, +0.384] * | +0.238 [+0.119, +0.381] * |
 
-Shallow KiL − validator and − baseline (notebook 07Q):
+Shallow KiL − validator and − baseline (notebook 07Q; compared with the unseeded 05Q and 06Q, to be recomputed with the seeded runs):
 
 | Compare | Tasks | Δpass^1 | Δpass^2 | Δpass^4 | Δpass^8 |
 |---|---|---|---|---|---|
@@ -99,32 +102,32 @@ Shallow KiL − validator and − baseline (notebook 07Q):
 | Shallow − baseline | all 50 | −0.010 [−0.055, +0.033] | −0.015 [−0.057, +0.029] | +0.001 [−0.034, +0.049] | +0.020 [+0.000, +0.060] |
 | Shallow − baseline | clean 42 | −0.012 [−0.065, +0.042] | −0.018 [−0.069, +0.035] | +0.001 [−0.041, +0.059] | +0.024 [+0.000, +0.071] |
 
-Violations per 100 dialogues (notebook 07Q, cell 12):
+Violations per 100 dialogues (notebooks 05Q and 07Q; validator: unseeded run):
 
 | Type | Violation | Baseline | Validator | Shallow |
 |---|---|---|---|---|
-| 1 | illegal call that ran | 84.8 | 0 | 115.5 |
-| 2 | write without a yes | 85.5 | 53.8 | 99.0 |
-| 2 | write without stating the details first | 89.0 | 64.0 | 114.8 |
-| 2 | tool call and reply in one turn | 4.2 | 2.2 | 3.0 |
-| 2 | recommendation phrase | 20.0 | 27.2 | 20.5 |
-| 3 | write rejected by the database | 57.2 | 41.5 | 88.0 |
-| 3 | any tool error | 93.8 | 81.2 | 117.0 |
-| 3 | malformed call | 1.8 | 3.0 | 2.5 |
+| 1 | illegal call that ran | 90.8 | 0 | 115.5 |
+| 2 | write without a yes | 89.8 | 53.8 | 99.0 |
+| 2 | write without stating the details first | 97.5 | 64.0 | 114.8 |
+| 2 | tool call and reply in one turn | 2.8 | 2.2 | 3.0 |
+| 2 | recommendation phrase | 12.2 | 27.2 | 20.5 |
+| 3 | write rejected by the database | 64.5 | 41.5 | 88.0 |
+| 3 | any tool error | 106.5 | 81.2 | 117.0 |
+| 3 | malformed call | 4.8 | 3.0 | 2.5 |
 
 Type 2 and 3 are automatic proxies; I checked them by reading failed dialogues.
 
 **What I found so far (Qwen3-8B)**
 
-- **The baseline is not consistent at all.** No task passes in all 8 tries; 18 of 50 pass sometimes and 32 never pass. Illegal calls happen most late in the dialogue (early / middle / late: 86 / 90 / 163).
+- **The baseline is not consistent at all.** No task passes in all 8 tries; 18 of 50 pass sometimes and 32 never pass. Illegal calls happen most in the middle and late parts of the dialogue (seeded run, early / middle / late: 95 / 122 / 146).
 - **The validator lifts the whole curve.** pass^1 more than doubles (0.150 → 0.380), and pass^8 rises from 0 to 0.200: 10 tasks now pass every time. The drop from k = 1 to 8 falls from 100% to 47%. Every difference is significant, on all 50 tasks and on the 42 clean ones. On Gemini (Part 1) the validator raised pass^1 only. One reason: Qwen breaks rules much more often (339 illegal calls vs. Gemini's 70), and each blocked call tells the agent which rule it broke, so it can fix the call and try again.
 - **It stops every rule break it can check.** 347 calls were blocked, none ran, and no passing dialogue has a violation.
 - **It cannot see the dialogue.** About half of the bookings and changes that ran (215 of 422) happened without an explicit yes from the user. A validator on tool calls cannot catch this. This is the gap semi-deep KiL is meant to close, and the line every KiL depth now has to beat.
 - **Shallow KiL does not help an 8B model.** Adding the graph as a rule list to the prompt leaves pass^1 at the baseline's level (0.140 vs 0.150, not significant) and far below the validator (−0.240, significant at every k). One task now passes every time, so pass^8 is 0.020 instead of 0.
-- **It makes the agent act more, not more carefully.** Shallow runs more writes (1.64 vs 1.43 per dialogue), so it also runs more illegal calls (462 vs 339) and gets more writes rejected (352 vs 229). The share of writes without a yes does not change (61% vs 60%). A likely reason: the checklist adds about 1,100 words to every prompt, and an 8B model follows a long prompt less well. I saw tool-call loops in the failed dialogues.
+- **It makes the agent act more, not more carefully.** Compared with the seeded baseline, shallow runs more writes (1.64 vs 1.50 per dialogue), so it also runs more illegal calls (462 vs 363) and gets more writes rejected (352 vs 258). The share of writes without a yes does not change (61% vs 60%). A likely reason: the checklist adds about 1,100 words to every prompt, and an 8B model follows a long prompt less well. I saw tool-call loops in the failed dialogues.
 - **Hand-check of 15 failed shallow dialogues:** the agent caused 14, the simulator 1. Most often the agent made up a user id, reservation id or flight number; changed a booking without a price or a yes; picked the wrong reservation or the wrong count; or repeated the same tool call. In the simulator case, the user kept asking for insurance after a correct refusal until the turn limit.
 - **Same as Part 1, H1 does not hold so far.** On Gemini, shallow also stayed below the validator.
-- **Runs.** A first baseline run with an older vLLM gave the same picture (pass^1 0.147, 338 illegal calls); I reran it so every Qwen system uses the same vLLM. In the validator run, one of 400 dialogues first hit the 24k context limit (blocked calls make dialogues longer); it was rerun once and finished.
+- **Runs.** A first baseline run with an older vLLM gave the same picture (pass^1 0.147, 338 illegal calls); I reran it so every Qwen system uses the same vLLM, and then once more with seeds. In the seeded baseline, trial 1 ran in two parts (16 + 34 tasks) because the Colab session stopped; both parts used seed 1 and the same settings, and the runner skips finished tasks, so no task ran twice. In the validator run, one of 400 dialogues first hit the 24k context limit (blocked calls make dialogues longer); it was rerun once and finished.
 
 ## Part 1: earlier study with Gemini (done)
 
@@ -231,7 +234,7 @@ notebooks/
   02_TauBench_vLLM_Pilot.ipynb       pilot with Qwen3-8B on vLLM (early phase)
   03_TauBench_Qwen32B_Pilot.ipynb    pilot with Qwen3-32B (early phase)
   04_Policy_Graph.ipynb              build the graph, load it into Neo4j, draw it
-  05Q_Qwen_Baseline.ipynb            Part 2: baseline
+  05Q_Qwen_Baseline.ipynb            Part 2: baseline, seeded rerun and seed check
   06Q_Qwen_Validator.ipynb           Part 2: runtime validator, paired comparison with 05Q
   07Q_Qwen_Shallow_KiL.ipynb         Part 2: shallow KiL, seeded runs, violation types, hand-check of 15 dialogues
   08Q-10Q                            Part 2: semi-deep, deep, comparison (coming)
@@ -259,7 +262,8 @@ settings.py, pilot_*.py, ...         early Qwen phase (01-03)
 run.py, setup.py                     from tau-bench itself (MIT, Copyright Sierra)
 
 results_qwen_<arm>/trial_1..8/       Part 2 dialogues of each Qwen system (validator: also blocks.jsonl)
-results_qwen_<arm>_*.json / .csv     config, vLLM version, pass^k, violations, consistency, paired Δ (_vs_base, _vs_validator)
+results_qwen_<arm>_*.json / .csv     config, vLLM version, pass^k, violations, consistency, paired Δ (_vs_base, _vs_validator, _vs_noseed)
+results_qwen_base_noseed/            the first, unseeded baseline run (kept for the seed check)
 results_qwen_<arm>_handcheck/        failed dialogues read by hand + labels.xlsx (from 07Q on)
 results_gemini_<arm>/trial_1..8/     Part 1 dialogues of each Gemini arm
 results_gemini_<arm>_passk.csv       pass^k table (also _config.json, _violations.csv)
@@ -286,7 +290,7 @@ The notebooks expect this exact path: `/content/drive/MyDrive/cmsc691-10-project
 
 **2. Free checks** (no GPU, no agent runs):
 
-- `05Q_Qwen_Baseline.ipynb`, cells 1, 2, 3, 8, 11, 12: recompute the Qwen baseline's pass^k, violations and consistency from the saved dialogues. Cell 3 needs `GEMINI_API_KEY` in Colab Secrets but makes no call.
+- `05Q_Qwen_Baseline.ipynb`, cells 1, 2, 3, 10–14: recompute the Qwen baseline's pass^k, seed check, violations and consistency from the saved dialogues. Cell 3 needs `GEMINI_API_KEY` in Colab Secrets but makes no call.
 - `06Q_Qwen_Validator.ipynb`, cells 1, 2, 3, 8–12: the same for the validator, plus the paired comparison with the baseline.
 - `07Q_Qwen_Shallow_KiL.ipynb`, cells 1, 2, 3, 9–15: shallow KiL's pass^k, paired tests, violation types and the hand-check summary.
 - `04_Policy_Graph.ipynb`: the last cells draw the full graph from the JSON without Neo4j.
