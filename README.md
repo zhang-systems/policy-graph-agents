@@ -30,7 +30,7 @@ Real dialogues replayed side by side: the same task passing once and failing the
 
 ## Poster
 
-[![Poster: policy graph agents](figures/poster.png)](figures/poster.pdf)
+<a href="figures/poster.pdf"><img src="figures/poster.png" alt="Poster: policy graph agents" width="600"></a>
 
 One-page summary of Part 1, including the RAG and NeSy retrieval results. Click for the PDF.
 
@@ -85,7 +85,7 @@ Semi-deep KiL differs from the validator in one way: it shapes the plan **before
 
 **Seed check (notebooks 05Q and 06Q):** seeded − unseeded, paired over the same tasks, is not significant at any k for either system (also on the clean 42). Baseline: Δpass^1 = −0.003 [−0.048, +0.045]; both runs have 0 / 18 / 32 tasks that always / sometimes / never pass. Validator: Δpass^1 = +0.025 [−0.020, +0.075]; 9 / 23 / 18 vs 10 / 20 / 20. So adding seeds did not change either result.
 
-![Qwen3-8B shallow KiL, validator and baseline, pass^k](figures/results_qwen_shallow_passk.png)
+<img src="figures/results_qwen_shallow_passk.png" alt="Qwen3-8B shallow KiL, validator and baseline, pass^k" width="600">
 
 Validator − baseline, paired over the same tasks (95% bootstrap CI, * = significant; notebook 06Q; both seeded):
 
@@ -165,7 +165,7 @@ The notebooks of Part 1's Gemini arms and the old Qwen deep-KiL notebook (05G–
 | Semi-deep KiL | 0.520 | 0.360 | 31% | 2 |
 | RAG (ablation, notebook 14) | 0.497 | 0.300 | 40% | 28 |
 
-![RAG arm pass^k](figures/gemini_rag_passk.png)
+<img src="figures/gemini_rag_passk.png" alt="RAG arm pass^k" width="600">
 
 ### What I found (airline, Gemini)
 
@@ -176,7 +176,7 @@ The notebooks of Part 1's Gemini arms and the old Qwen deep-KiL notebook (05G–
 - **The graph's exact rule list is what stops violations (RAG ablation).** RAG and semi-deep differ only in where the rules come from. pass^k is about the same (clean 42: pass^1 −0.036, pass^8 −0.071, not significant), but RAG lets 28 illegal calls through vs. 2. RAG finds 71% of the rules the graph gives for an action, and all of them in only 16% of checks. For cancellations it most often misses C3 ("only a trip with no flown segment can be cancelled"), and 24 of its 28 violations break C3.
 - **The graph can repair vector retrieval (NeSy, notebook 15, offline).** From the same 440 vector hits, letting the graph pick the action and add its rules raises recall from 71% to 96%, checks with all rules from 16% to 89%, and precision from 62% to 93%. C3 is found in 173 of 173 cancellation checks (vector: 62). It fails on baggage and passenger changes, where the seeds point to the flight-change rule. This measures retrieval only; an agent run with NeSy is future work.
 
-![Rule recall: vector, NeSy, graph](figures/nesy_recall.png)
+<img src="figures/nesy_recall.png" alt="Rule recall: vector, NeSy, graph" width="600">
 
 - **Final-state scoring hides violations.** 13% of the Gemini baseline's passing dialogues still break a rule.
 - **Hand-check of 30 failed dialogues:** the agent caused 20, the simulator 5, the benchmark 4, unclear 1.
@@ -191,7 +191,7 @@ The notebooks of Part 1's Gemini arms and the old Qwen deep-KiL notebook (05G–
 | Runtime validator | 0.316 | 0.125 | 60% | 2.4 | 45 | 16.32 |
 | Shallow KiL | 0.434 | 0.175 | 60% | 4.5 | 0 | 19.92 |
 
-![pass^k curves, telecom](figures/telecom_passk.png)
+<img src="figures/telecom_passk.png" alt="pass^k curves, telecom" width="600">
 
 Paired Δ over the same 40 tasks (95% bootstrap CI, * = significant; notebook 13):
 
