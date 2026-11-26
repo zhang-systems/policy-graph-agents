@@ -1,0 +1,12 @@
+[
+  {
+    "task_id": 37,
+    "reward": 0.0,
+    "info": {
+      "error": "1 validation error for EnvResponse\nobservation\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.14/v/string_type",
+      "traceback": "Traceback (most recent call last):\n  File \"/content/drive/MyDrive/cmsc691-10-project2/tau_bench/run.py\", line 78, in _run\n    res = agent.solve(\n        env=isolated_env,\n        task_index=idx,\n    )\n  File \"/content/drive/MyDrive/cmsc691-10-project2/tau_bench/agents/tool_calling_agent.py\", line 50, in solve\n    env_response = env.step(action)\n  File \"/content/drive/MyDrive/cmsc691-10-project2/deep_run.py\", line 92, in step\n    res = real_step(self, action)\n  File \"/content/drive/MyDrive/cmsc691-10-project2/tau_bench/envs/base.py\", line 119, in step\n    return EnvResponse(observation=observation, reward=reward, done=done, info=info)\n  File \"/usr/local/lib/python3.13/dist-packages/pydantic/main.py\", line 280, in __init__\n    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)\npydantic_core._pydantic_core.ValidationError: 1 validation error for EnvResponse\nobservation\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.14/v/string_type\n"
+    },
+    "traj": [],
+    "trial": 0
+  }
+]

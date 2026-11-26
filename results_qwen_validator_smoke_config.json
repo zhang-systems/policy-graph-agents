@@ -1,0 +1,17 @@
+{
+  "agent": "Qwen/Qwen3-8B",
+  "user": "gemini-3.1-flash-lite",
+  "arm": "validator",
+  "validator": true,
+  "policy": "wiki.md only",
+  "simulator_seed": "trial number (trial_1 -> 1 ... trial_8 -> 8)",
+  "agent_temperature": 0.0,
+  "user_temperature": [
+    "line 12: from settings_gemini import MODEL as USER_MODEL, NUM_RETRIES, CALL_TIMEOUT, USER_TEMPERATU",
+    "line 37: kwargs[\"temperature\"] = USER_TEMPERATURE"
+  ],
+  "gpu": "NVIDIA L4",
+  "max_model_len": 24576,
+  "max_num_seqs": 8,
+  "vllm": "0.34.0"
+}
