@@ -17,8 +17,8 @@ The project has two parts:
 |---|---|---|---|---|
 | Baseline (prose policy) | 05Q | ✅ done (seeded rerun) | 0.147 | 0.000 |
 | Runtime validator | 06Q | ✅ done (seeded rerun) | 0.405 | 0.180 |
-| Shallow KiL | 07Q | ✅ done | 0.140 | 0.020 |
-| Semi-deep KiL | 08Q | ✅ done | 0.072 | 0.000 |
+| Shallow KiL | 07Q | ✅ done (seeded) | 0.140 | 0.020 |
+| Semi-deep KiL | 08Q | ✅ done (seeded) | 0.072 | 0.000 |
 | Deep KiL | 09Q | 🛠 being built | | |
 | Comparison | 10Q | 🛠 being built | | |
 
