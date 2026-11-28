@@ -1,0 +1,72 @@
+{
+  "dialogues": 400,
+  "passed": 29,
+  "blocked": 0,
+  "g1_calls": 946,
+  "types": {
+    "illegal": {
+      "count": 451,
+      "early": 106,
+      "middle": 154,
+      "late": 191,
+      "passing dialogues with it": 7
+    },
+    "g1_no_yes": {
+      "count": 644,
+      "early": 99,
+      "middle": 261,
+      "late": 284,
+      "passing dialogues with it": 8
+    },
+    "no_explain": {
+      "count": 914,
+      "early": 120,
+      "middle": 344,
+      "late": 450,
+      "passing dialogues with it": 9
+    },
+    "g3_call_and_reply": {
+      "count": 11,
+      "early": 5,
+      "middle": 3,
+      "late": 3,
+      "passing dialogues with it": 0
+    },
+    "g2_recommend": {
+      "count": 3,
+      "early": 0,
+      "middle": 1,
+      "late": 2,
+      "passing dialogues with it": 0
+    },
+    "db_rejected": {
+      "count": 492,
+      "early": 59,
+      "middle": 207,
+      "late": 226,
+      "passing dialogues with it": 13
+    },
+    "tool_error": {
+      "count": 734,
+      "early": 189,
+      "middle": 267,
+      "late": 278,
+      "passing dialogues with it": 25
+    },
+    "malformed": {
+      "count": 191,
+      "early": 46,
+      "middle": 72,
+      "late": 73,
+      "passing dialogues with it": 0
+    }
+  },
+  "illegal": 451,
+  "g1_miss": 644,
+  "arg_err": 492,
+  "early": 106,
+  "middle": 154,
+  "late": 191,
+  "passed dialogues": 29,
+  "passed with \u22651 illegal": 7
+}

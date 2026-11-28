@@ -1,0 +1,6 @@
+{
+  "vllm": "0.34.0",
+  "max_num_seqs": 8,
+  "gpu": "NVIDIA L4",
+  "max_model_len": 24576
+}

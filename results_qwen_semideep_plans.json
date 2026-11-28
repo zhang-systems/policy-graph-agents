@@ -1,0 +1,24 @@
+{
+  "steps": 6722,
+  "actions": {
+    "update_reservation_flights": 2465,
+    "none": 674,
+    "cancel_reservation": 2846,
+    "update_reservation_baggages": 817,
+    "book_reservation": 851,
+    "update_reservation_passengers": 419,
+    "upgrade_cabin": 224,
+    "send_certificate": 804
+  },
+  "verdicts": {
+    "does not hold": 6452,
+    "holds": 51394,
+    "unknown": 20742
+  },
+  "writes_allowed": 1405,
+  "writes_against_check": 124,
+  "refused_after_check": 647,
+  "write_without_yes_by_own_check": 8,
+  "plan_retry": 552,
+  "check_retry": 346
+}
