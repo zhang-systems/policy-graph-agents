@@ -2,7 +2,7 @@
 
 **Does turning an LLM agent's text policy into a graph make it follow the rules more consistently?**
 
-An evaluation study of rule-following in LLM tool-calling agents on τ-bench airline, with paired bootstrap statistics and hand-checked failures. So far: 13 agent setups and 4,960 multi-turn dialogues.
+An evaluation study of rule-following in LLM tool-calling agents on τ-bench airline, with paired bootstrap statistics and hand-checked failures. So far: 14 agent setups and 5,360 multi-turn dialogues.
 
 I test this on the airline domain of [τ-bench](https://github.com/sierra-research/tau-bench). An LLM customer-service agent talks to an LLM-simulated customer and calls tools (book, change, cancel flights) on a real database. As a stretch goal, I repeat the main test on the telecom domain of τ²-bench, where the user also runs tools on their own phone.
 
@@ -11,14 +11,14 @@ The project has two parts:
 - **Part 2, the main comparison (in progress):** five systems, all with the same open model (Qwen3-8B) as the agent: baseline, runtime validator, and three depths of knowledge infusion (shallow, semi-deep, deep). One model for every depth makes the comparison fair, and deep infusion needs model weights anyway.
 - **Part 1, the earlier study (done):** the same question with Gemini as the agent, plus a RAG ablation, a neurosymbolic retriever, and the telecom domain. Its findings shaped Part 2.
 
-## Status (2026-11-26)
+## Status (2026-11-28)
 
 | System | Notebook | Status | pass^1 | pass^8 |
 |---|---|---|---|---|
 | Baseline (prose policy) | 05Q | ✅ done (seeded rerun) | 0.147 | 0.000 |
 | Runtime validator | 06Q | ✅ done (seeded rerun) | 0.405 | 0.180 |
 | Shallow KiL | 07Q | ✅ done | 0.140 | 0.020 |
-| Semi-deep KiL | 08Q | 🛠 being built | | |
+| Semi-deep KiL | 08Q | ✅ done | 0.072 | 0.000 |
 | Deep KiL | 09Q | 🛠 being built | | |
 | Comparison | 10Q | 🛠 being built | | |
 
@@ -71,7 +71,7 @@ All five start from the same policy graph (`airline_policy_graph.json`, see Part
 
 Semi-deep KiL differs from the validator in one way: it shapes the plan **before** the call instead of blocking the call afterward. So it can also catch dialogue-level mistakes, such as acting without first explaining the change and getting a yes. If a rule does not hold, the agent tells the customer which one.
 
-### Results so far: baseline (05Q), validator (06Q), shallow KiL (07Q), all seeded
+### Results so far: baseline (05Q), validator (06Q), shallow KiL (07Q), semi-deep KiL (08Q), all seeded
 
 | System | pass^1 (95% CI) | pass^8 | drop 1→8 | blocked calls | illegal calls run | write without a yes | passing dialogues with a violation |
 |---|---|---|---|---|---|---|---|
@@ -80,12 +80,13 @@ Semi-deep KiL differs from the validator in one way: it shapes the plan **before
 | Runtime validator (seeded) | 0.405 [0.29, 0.51] | 0.180 | 56% | 390 | 0 | 261 of 422 | 0 of 162 |
 | Runtime validator (no seed) | 0.380 [0.27, 0.49] | 0.200 | 47% | 347 | 0 | 215 of 422 | 0 of 152 |
 | Shallow KiL | 0.140 [0.08, 0.20] | 0.020 | 86% | 0 | 462 | 396 of 654 | 8 of 56 |
+| Semi-deep KiL | 0.072 [0.04, 0.11] | 0.000 | 100% | 0 | 451 | 644 of 946 | 7 of 29 |
 
 "Write without a yes" counts bookings and changes that ran although the user's last message had no yes, confirm or go ahead.
 
 **Seed check (notebooks 05Q and 06Q):** seeded − unseeded, paired over the same tasks, is not significant at any k for either system (also on the clean 42). Baseline: Δpass^1 = −0.003 [−0.048, +0.045]; both runs have 0 / 18 / 32 tasks that always / sometimes / never pass. Validator: Δpass^1 = +0.025 [−0.020, +0.075]; 9 / 23 / 18 vs 10 / 20 / 20. So adding seeds did not change either result.
 
-<img src="figures/results_qwen_shallow_passk.png" alt="Qwen3-8B shallow KiL, validator and baseline, pass^k" width="600">
+<img src="figures/results_qwen_semideep_passk.png" alt="Qwen3-8B semi-deep, shallow, validator and baseline, pass^k" width="600">
 
 Validator − baseline, paired over the same tasks (95% bootstrap CI, * = significant; notebook 06Q; both seeded):
 
@@ -103,18 +104,29 @@ Shallow KiL − validator and − baseline (notebook 07Q; compared with the unse
 | Shallow − baseline | all 50 | −0.010 [−0.055, +0.033] | −0.015 [−0.057, +0.029] | +0.001 [−0.034, +0.049] | +0.020 [+0.000, +0.060] |
 | Shallow − baseline | clean 42 | −0.012 [−0.065, +0.042] | −0.018 [−0.069, +0.035] | +0.001 [−0.041, +0.059] | +0.024 [+0.000, +0.071] |
 
-Violations per 100 dialogues (notebooks 05Q, 06Q and 07Q, all seeded):
+Semi-deep KiL − validator, − baseline and − shallow (notebook 08Q; all seeded):
 
-| Type | Violation | Baseline | Validator | Shallow |
-|---|---|---|---|---|
-| 1 | illegal call that ran | 90.8 | 0 | 115.5 |
-| 2 | write without a yes | 89.8 | 65.2 | 99.0 |
-| 2 | write without stating the details first | 97.5 | 71.5 | 114.8 |
-| 2 | tool call and reply in one turn | 2.8 | 7.5 | 3.0 |
-| 2 | recommendation phrase | 12.2 | 17.5 | 20.5 |
-| 3 | write rejected by the database | 64.5 | 43.2 | 88.0 |
-| 3 | any tool error | 106.5 | 83.0 | 117.0 |
-| 3 | malformed call | 4.8 | 9.2 | 2.5 |
+| Compare | Tasks | Δpass^1 | Δpass^2 | Δpass^4 | Δpass^8 |
+|---|---|---|---|---|---|
+| Semi-deep − validator | all 50 | −0.333 [−0.432, −0.235] * | −0.291 [−0.401, −0.189] * | −0.236 [−0.348, −0.134] * | −0.180 [−0.300, −0.080] * |
+| Semi-deep − validator | clean 42 | −0.396 [−0.500, −0.292] * | −0.347 [−0.468, −0.233] * | −0.281 [−0.407, −0.166] * | −0.214 [−0.333, −0.095] * |
+| Semi-deep − baseline | all 50 | −0.075 [−0.138, −0.018] * | −0.057 [−0.109, −0.014] * | −0.031 [−0.063, −0.006] * | +0.000 |
+| Semi-deep − baseline | clean 42 | −0.089 [−0.164, −0.021] * | −0.068 [−0.129, −0.015] * | −0.037 [−0.075, −0.007] * | +0.000 |
+| Semi-deep − shallow | all 50 | −0.068 [−0.130, −0.010] * | −0.037 [−0.089, −0.000] * | −0.023 [−0.065, +0.000] | −0.020 [−0.060, +0.000] |
+| Semi-deep − shallow | clean 42 | −0.080 [−0.152, −0.012] * | −0.044 [−0.105, −0.000] * | −0.027 [−0.077, +0.000] | −0.024 [−0.071, +0.000] |
+
+Violations per 100 dialogues (notebooks 05Q–08Q, all seeded):
+
+| Type | Violation | Baseline | Validator | Shallow | Semi-deep |
+|---|---|---|---|---|---|
+| 1 | illegal call that ran | 90.8 | 0 | 115.5 | 112.8 |
+| 2 | write without a yes | 89.8 | 65.2 | 99.0 | 161.0 |
+| 2 | write without stating the details first | 97.5 | 71.5 | 114.8 | 228.5 |
+| 2 | tool call and reply in one turn | 2.8 | 7.5 | 3.0 | 2.8 |
+| 2 | recommendation phrase | 12.2 | 17.5 | 20.5 | 0.8 |
+| 3 | write rejected by the database | 64.5 | 43.2 | 88.0 | 123.0 |
+| 3 | any tool error | 106.5 | 83.0 | 117.0 | 183.5 |
+| 3 | malformed call | 4.8 | 9.2 | 2.5 | 47.8 |
 
 Type 2 and 3 are automatic proxies; I checked them by reading failed dialogues.
 
@@ -127,8 +139,11 @@ Type 2 and 3 are automatic proxies; I checked them by reading failed dialogues.
 - **Shallow KiL does not help an 8B model.** Adding the graph as a rule list to the prompt leaves pass^1 at the baseline's level (0.140 vs 0.147) and far below the validator (0.405). (The paired tests in the table above still use the unseeded runs; they will be recomputed.) One task now passes every time, so pass^8 is 0.020 instead of 0.
 - **It makes the agent act more, not more carefully.** Compared with the seeded baseline, shallow runs more writes (1.64 vs 1.50 per dialogue), so it also runs more illegal calls (462 vs 363) and gets more writes rejected (352 vs 258). The share of writes without a yes does not change (61% vs 60%). A likely reason: the checklist adds about 1,100 words to every prompt, and an 8B model follows a long prompt less well. I saw tool-call loops in the failed dialogues.
 - **Hand-check of 15 failed shallow dialogues:** the agent caused 14, the simulator 1. Most often the agent made up a user id, reservation id or flight number; changed a booking without a price or a yes; picked the wrong reservation or the wrong count; or repeated the same tool call. In the simulator case, the user kept asking for insurance after a correct refusal until the turn limit.
-- **Same as Part 1, H1 does not hold so far.** On Gemini, shallow also stayed below the validator.
-- **Runs.** A first baseline run with an older vLLM gave the same picture (pass^1 0.147, 338 illegal calls); I reran it so every Qwen system uses the same vLLM, and then once more with seeds, as I did for the validator. In the seeded baseline, trial 1 ran in two parts (16 + 34 tasks) because the Colab session stopped; both parts used seed 1 and the same settings, and the runner skips finished tasks, so no task ran twice. In the seeded validator run, 2 of 400 dialogues did not finish at first (one hit the 24k context limit, since blocked calls make dialogues longer; one got a tool reply τ-bench could not parse); both were rerun once and finished.
+- **Semi-deep KiL is the lowest of all four.** At every step the agent plans, gets that action's rules from the graph, cites each one (holds / does not hold / unknown), and only then acts; nothing blocks a call afterward. pass^1 falls to 0.072, and no task passes every time (always / sometimes / never: 0 / 13 / 37). It is below the validator at every k (−0.333 at k = 1), and below the baseline (−0.075) and shallow (−0.068) at pass^1.
+- **Why: an 8B model checks itself too leniently, and does not always follow its own check.** The checks were complete (6,722 steps, no rule left uncited), but 65% of the verdicts were "holds". Before a write, its own check flagged a missing yes only 8 times, while 644 writes ran without one. It made 124 writes its own check said were not allowed (e.g. changing a basic-economy booking, cancelling a non-refundable one). The check did help sometimes: 647 times it replied with a NO instead of the call. The planning text also makes each step longer: far more writes (946 vs 598), malformed calls (47.8 vs 4.8 per 100), tool errors, and about 4× the compute.
+- **Hand-check of 15 failed semi-deep dialogues:** the agent caused all 15. Three patterns: a lenient check (missing yes or a flown trip not flagged), acting against its own check, and the same mistakes as shallow (made-up ids, wrong reservation, loops). In several dialogues it first said NO correctly, then gave in when the user pushed.
+- **Same as Part 1, H1 does not hold so far.** Neither shallow nor semi-deep beats the validator. A check written as code is more reliable than the same model checking itself.
+- **Runs.** A first baseline run with an older vLLM gave the same picture (pass^1 0.147, 338 illegal calls); I reran it so every Qwen system uses the same vLLM, and then once more with seeds, as I did for the validator. In the seeded baseline, trial 1 ran in two parts (16 + 34 tasks) because the Colab session stopped; both parts used seed 1 and the same settings, and the runner skips finished tasks, so no task ran twice. In the semi-deep run, the first full run was lost (its files never synced to Drive before the Colab session ended), and the Gemini API balance ran out mid-run; the run was redone and resumed, and 1 of 400 dialogues (24k context limit twice) counts as a fail. In the seeded validator run, 2 of 400 dialogues did not finish at first (one hit the 24k context limit, since blocked calls make dialogues longer; one got a tool reply τ-bench could not parse); both were rerun once and finished.
 
 ## Part 1: earlier study with Gemini (done)
 
@@ -219,7 +234,7 @@ I used an AI coding assistant to draft code and the first version of the graph J
 | Knowledge graphs | A policy graph built from a prose policy (7 actions, 29 rules, every rule traced to its source line), loaded into Neo4j and used at three depths |
 | Fine-tuning | LoRA on Qwen3-8B with a custom loss that penalizes rule-breaking tool calls (deep KiL, Part 2) |
 | RAG / NeSy retrieval | Dense retrieval over the policy text as a controlled ablation, with rule-level recall; a neurosymbolic retriever that expands vector hits on the graph (recall 71% → 96%) |
-| Evaluation | pass^k for k = 1..8, paired bootstrap CIs, violation replay on a fresh database copy, violations by turn position, failure taxonomy, 60 dialogues read by hand |
+| Evaluation | pass^k for k = 1..8, paired bootstrap CIs, violation replay on a fresh database copy, violations by turn position, failure taxonomy, 75 dialogues read by hand |
 | Finding benchmark bugs | Used the validator to show 8 of 50 τ-bench answer keys break the benchmark's own policy |
 | Engineering | Resumable Colab notebooks, smoke tests with time and cost estimates, hardware and vLLM version saved with every run, API keys only from secrets |
 
@@ -238,7 +253,8 @@ notebooks/
   05Q_Qwen_Baseline.ipynb            Part 2: baseline, seeded rerun and seed check
   06Q_Qwen_Validator.ipynb           Part 2: runtime validator, seeded rerun, paired comparison with 05Q and seed check
   07Q_Qwen_Shallow_KiL.ipynb         Part 2: shallow KiL, seeded runs, violation types, hand-check of 15 dialogues
-  08Q-10Q                            Part 2: semi-deep, deep, comparison (coming)
+  08Q_Qwen_SemiDeep_KiL.ipynb        Part 2: semi-deep KiL (plan, graph check, act at every step), planning-state analysis, hand-check
+  09Q-10Q                            Part 2: deep, comparison (coming)
   11_Tau2_Telecom_Setup.ipynb        tau2-bench install and 5-task pilot
   12_Tau2_Telecom_Arms.ipynb         telecom baseline, validator, shallow KiL
   13_Tau2_Telecom_Compare.ipynb      telecom comparison, hand-check, tau2 airline answer-key check
@@ -248,6 +264,7 @@ notebooks/
 airline_policy_graph.json            the airline policy graph (master copy)
 settings_deep.py, deep_run.py        Part 2: Qwen agent settings and runner (vLLM agent, Gemini user)
 qwen_run.py                          Part 2: wraps deep_run.py; simulator seed per trial, shallow checklist (from 07Q)
+semideep_run.py                      Part 2: semi-deep KiL, plan + graph check before every agent step (from 08Q)
 settings_gemini.py                   task, trial and user-simulator settings shared by every arm
 policy_checker.py                    the 24 data rules as code
 violations.py                        counts violations in saved dialogues
@@ -262,7 +279,7 @@ load_neo4j.py, graph_draw.py         Neo4j import and graph pictures
 settings.py, pilot_*.py, ...         early Qwen phase (01-03)
 run.py, setup.py                     from tau-bench itself (MIT, Copyright Sierra)
 
-results_qwen_<arm>/trial_1..8/       Part 2 dialogues of each Qwen system (validator: also blocks.jsonl)
+results_qwen_<arm>/trial_1..8/       Part 2 dialogues of each Qwen system (validator: also blocks.jsonl; semi-deep: plans.jsonl)
 results_qwen_<arm>_*.json / .csv     config, vLLM version, pass^k, violations, consistency, paired Δ (_vs_base, _vs_validator, _vs_noseed)
 results_qwen_<arm>_noseed/          the first, unseeded runs of the baseline and the validator (kept for the seed check)
 results_qwen_<arm>_handcheck/        failed dialogues read by hand + labels.xlsx (from 07Q on)
@@ -294,6 +311,7 @@ The notebooks expect this exact path: `/content/drive/MyDrive/cmsc691-10-project
 - `05Q_Qwen_Baseline.ipynb`, cells 1, 2, 3, 10–14: recompute the Qwen baseline's pass^k, seed check, violations and consistency from the saved dialogues. Cell 3 needs `GEMINI_API_KEY` in Colab Secrets but makes no call.
 - `06Q_Qwen_Validator.ipynb`, cells 1, 2, 3, 10–14: the same for the validator, plus the paired comparison with the baseline.
 - `07Q_Qwen_Shallow_KiL.ipynb`, cells 1, 2, 3, 9–15: shallow KiL's pass^k, paired tests, violation types and the hand-check summary.
+- `08Q_Qwen_SemiDeep_KiL.ipynb`, cells 1, 2, 3, 4, 9–17: the same for semi-deep, plus the analysis of its planning states.
 - `04_Policy_Graph.ipynb`: the last cells draw the full graph from the JSON without Neo4j.
 - `14_Gemini_RAG.ipynb`, cells 9–13: recompute the RAG arm's pass^k, paired tests, violations and retrieval recall (run cells 1–6 first: cell 3 makes one Gemini test call, cell 6 downloads the free MiniLM model).
 - `15_NeSy_Retrieval.ipynb`: the NeSy retrieval comparison from the RAG logs (about 1 minute, no API key).
@@ -303,7 +321,8 @@ The notebooks expect this exact path: `/content/drive/MyDrive/cmsc691-10-project
 
 | Notebooks | Runtime | Needs | Cost |
 |---|---|---|---|
-| 05Q–07Q (and 08Q) | GPU, L4 or larger | `GEMINI_API_KEY` for the user simulator | about 2.6–3 h on an L4 + about $1–1.5 per system |
+| 05Q–07Q | GPU, L4 or larger | `GEMINI_API_KEY` for the user simulator | about 2.6–3 h on an L4 + about $1–1.5 per system |
+| 08Q | GPU, L4 or larger | `GEMINI_API_KEY` | about 11 h on an L4 + about $1 |
 | 14 (RAG) | CPU | `GEMINI_API_KEY` | about $22, about 4 hours |
 | 04 (Neo4j part) | CPU | Neo4j Aura login in Colab Secrets | free |
 | 11, 12 (telecom) | CPU | `GEMINI_API_KEY` | about $16–20 per arm |
