@@ -30,7 +30,7 @@ Real dialogues replayed side by side: the same task passing once and failing the
 
 ## Poster
 
-<a href="figures/poster.pdf"><img src="figures/poster.png" alt="Poster: policy graph agents" width="600"></a>
+<a href="figures/poster.pdf"><img src="figures/poster.png" alt="Poster: policy graph agents" width="100%"></a>
 
 One-page summary of Part 1, including the RAG and NeSy retrieval results. Click for the PDF.
 
